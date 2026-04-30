@@ -21,13 +21,16 @@
   "author": "Siddhant jadoun",
   "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
+    "bcrypt": "^6.0.0",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^16.6.1",
     "express": "^4.22.1",
     "express-validator": "^7.3.2",
     "jsonwebtoken": "^9.0.3",
-    "mongoose": "^7.8.9"
+    "mongoose": "^7.8.9",
+    "nodemailer": "^8.0.6",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

@@ -1,6 +1,8 @@
 import express from 'express';
 import cors from 'cors';
 const app = express();
+import cookieParser from "cookie-parser";
+
 
 //middleware configuration
 
@@ -17,12 +19,15 @@ app.use(cors({
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
     allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
 }));
+app.use(cookieParser());
 
 
 //importing routes
 import healthCheckRoute from './modules/healthcheck/healthCheck.route.js';
+import userRoute from './modules/user/user.routes.js';
 
 app.use("/api/v1/healthCheck", healthCheckRoute)
+app.use("/api/v1/auth", userRoute)
 
 
 export  default app;
