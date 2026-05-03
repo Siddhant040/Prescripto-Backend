@@ -1,5 +1,5 @@
 import mongoose, { Schema } from "mongoose";
-import { AvailableRole, UserRoleEnum } from "./user.constants.js";
+import { AvailableRole, UserRoleEnum } from "../../utils/constants.js";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import crypto from "crypto";

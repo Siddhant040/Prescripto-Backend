@@ -6,15 +6,36 @@ import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema,
 
 const router = Router();
 
-router.route("/register").post(validate(registerSchema), register);
-router.route("/login").post(validate(loginSchema), login);
+router.post("/register", validate(registerSchema), register);
+router.post("/login", validate(loginSchema), login);
 
-router.route("/logout").post(authMiddleware, logout);
-router.route("/verify-email/:token").get(verifyEmail);
-router.route("/resend-email-verification").post(resendEmailVerification);
-router.route("/forgot-password").post(validate(forgotPasswordSchema), forgotPassword);
-router.route("/reset-password/:token").post(validate(resetPasswordSchema), resetPassword);
-router.route("/change-password").post(authMiddleware, validate(changePasswordSchema), changePassword);
-router.route("/refresh-token").get(refreshAccessToken);
-router.route("/current-user").get(authMiddleware, getCurrentUser);
-export default router
+router.post("/logout", authMiddleware, logout);
+
+router.get("/verify-email/:token", verifyEmail);
+
+router.post(
+  "/resend-email-verification",
+  authMiddleware,
+  resendEmailVerification
+);
+
+router.post("/forgot-password", validate(forgotPasswordSchema), forgotPassword);
+
+router.post(
+  "/reset-password/:token",
+  validate(resetPasswordSchema),
+  resetPassword
+);
+
+router.post(
+  "/change-password",
+  authMiddleware,
+  validate(changePasswordSchema),
+  changePassword
+);
+
+router.post("/refresh-token", refreshAccessToken);
+
+router.get("/me", authMiddleware, getCurrentUser);
+
+export default router;
