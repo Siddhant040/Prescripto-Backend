@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 const app = express();
 import cookieParser from "cookie-parser";
+import { errorHandler } from "./middleware/error.middleware.js";
 
 
 //middleware configuration
@@ -26,10 +27,13 @@ app.use(cookieParser());
 import healthCheckRoute from './modules/healthcheck/healthCheck.route.js';
 import userRoute from './modules/user/user.routes.js';
 import doctorRoute from './modules/doctor/doctor.routes.js';
+import appointmentRoute from './modules/Appointment/appointment.routes.js';
 
 app.use("/api/v1/healthCheck", healthCheckRoute)
 app.use("/api/v1/auth", userRoute)
 app.use("/api/v1/doctor", doctorRoute)
+app.use("/api/v1/appointment", appointmentRoute)
+app.use(errorHandler)
 
 
 export  default app;

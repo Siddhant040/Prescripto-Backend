@@ -99,13 +99,15 @@ const getDoctorById = asyncHandler(async (req, res) => {
 
   const { id } = req.params;
 
-  // 1. Validate ID format (important)
+  // 1. Validate ID format
   if (!mongoose.Types.ObjectId.isValid(id)) {
     throw new ApiError(400, "Invalid doctor ID");
   }
 
-  // 2. Find doctor
-  const doctor = await Doctor.findById(id)
+  // 2. Support lookup by either doctor profile id or linked user id
+  const doctor = await Doctor.findOne({
+    $or: [{ _id: id }, { user: id }]
+  })
     .populate("user", "name email avatar");
 
   // 3. Check existence
@@ -224,8 +226,10 @@ const verifyDoctorProfile = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid doctor ID");
   }
 
-  // 2. Find doctor
-  const doctor = await Doctor.findById(id);
+  // 2. Find doctor by either doctor profile id or linked user id
+  const doctor = await Doctor.findOne({
+    $or: [{ _id: id }, { user: id }]
+  });
 
   if (!doctor) {
     throw new ApiError(404, "Doctor not found");
