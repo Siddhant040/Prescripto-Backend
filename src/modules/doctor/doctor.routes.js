@@ -6,7 +6,8 @@ import {
   updateDoctorProfile,
   deleteDoctorProfile,
   toggleDoctorAvailability,
-  verifyDoctorProfile
+  verifyDoctorProfile,
+  updateAvailability
 } from "./doctor.controller.js";
 
 import { authMiddleware } from "../../middleware/auth.middleware.js";
@@ -16,6 +17,14 @@ import { createDoctorSchema } from "./doctor.validation.js";
 import { UserRoleEnum} from "../../utils/constants.js";
 
 const router = Router();
+
+
+router.patch(
+  "/slot-availability",
+  authMiddleware,
+  authorizeRoles("doctor"),
+  updateAvailability
+);
 
 
 //public routes
@@ -61,5 +70,6 @@ router.patch(
   authorizeRoles(UserRoleEnum.ADMIN),
   verifyDoctorProfile
 );
+
 
 export default router;

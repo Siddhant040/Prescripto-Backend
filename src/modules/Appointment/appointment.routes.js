@@ -4,17 +4,28 @@ import {
     getAppointmentsForUser,
     getAppointmentsForDoctor,
     getAppointmentsById,
-
+    rescheduleAppointment,
     updateAppointmentStatus,
-    cancelAppointment
+    cancelAppointment,
+    getAvailableSlots
 } from "./appointment.controller.js";
 
-import {createAppointmentSchema}  from "./appointment.validation.js";
+import {
+  createAppointmentSchema,
+  rescheduleAppointmentSchema
+}  from "./appointment.validation.js";
 import {validate} from "../../middleware/validate.middleware.js";
 import {authMiddleware} from "../../middleware/auth.middleware.js";
 import {authorizeRoles} from "../../middleware/role.middleware.js";
 
 const router = Router();
+
+router.get(
+  "/slots",
+  authMiddleware,
+  authorizeRoles("patient", "doctor", "admin"),
+  getAvailableSlots
+);
 
 router.post(
   "/",
@@ -46,6 +57,14 @@ router.get(
 );
 
 router.patch(
+  "/:id/reschedule",
+  authMiddleware,
+  authorizeRoles("patient", "admin"),
+  validate(rescheduleAppointmentSchema),
+  rescheduleAppointment
+);
+
+router.patch(
   "/:id/status",
   authMiddleware,
   authorizeRoles("doctor"),
@@ -58,5 +77,6 @@ router.patch(
   authorizeRoles("patient", "doctor", "admin"),
   cancelAppointment
 );
+
 
 export default router;

@@ -1,9 +1,19 @@
+import dotenv from "dotenv";
 import express from 'express';
 import cors from 'cors';
 const app = express();
 import cookieParser from "cookie-parser";
 import { errorHandler } from "./middleware/error.middleware.js";
 
+dotenv.config({ path: "./src/.env" });
+
+const allowedOrigin = process.env.Url?.replace(/\/$/, "") || "http://localhost:5173";
+const corsOptions = {
+    origin: allowedOrigin,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+};
 
 //middleware configuration
 
@@ -14,12 +24,8 @@ app.use(express.static("public"))
 
 
 //cors configuration 
-app.use(cors({
-    origin: process.env.Url, // Replace with your frontend URL
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], // Allowed HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-}));
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 app.use(cookieParser());
 
 

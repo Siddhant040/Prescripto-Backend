@@ -14,3 +14,13 @@ export const APPOINTMENT_STATUS = {
 };
 
 export const AvailableAppointmentStatus = Object.values(APPOINTMENT_STATUS);
+
+export const DaysOfWeek = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday"
+];

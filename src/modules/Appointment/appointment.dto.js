@@ -5,10 +5,12 @@ export const mapAppointmentToDTO = (appointment) => ({
 
   doctor: appointment.doctor && {
     id: appointment.doctor._id,
-    name: appointment.doctor.name,
+    userId: appointment.doctor.user?._id,
+    name: appointment.doctor.user?.name,
     specialization: appointment.doctor.specialization,
     consultationFee: appointment.doctor.consultationFee,
-    avatar: appointment.doctor.avatar
+    avatar: appointment.doctor.user?.avatar,
+    email: appointment.doctor.user?.email
   },
 
   patient: appointment.patient && {

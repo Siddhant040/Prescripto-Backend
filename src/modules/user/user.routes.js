@@ -15,7 +15,6 @@ router.get("/verify-email/:token", verifyEmail);
 
 router.post(
   "/resend-email-verification",
-  authMiddleware,
   resendEmailVerification
 );
 

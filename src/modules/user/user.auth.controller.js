@@ -6,6 +6,11 @@ import  { passwordResetTemplate,emailVerificationTemplate, sendEmail } from "../
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 
+const getCookieOptions = () => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: process.env.NODE_ENV === "production" ? "strict" : "lax",
+});
 
 
 const generateAccessAndRefreshTokens = async (userId) => {
@@ -74,17 +79,10 @@ const loginUser = asyncHandler(async (req, res) => {
 
  }
 
- const option={
-    httpOnly:true,
-    secure:true,
-    
- }
-
-
        return res
        .status(200)
-       .cookie("accessToken", accessToken, option)
-       .cookie("refreshToken", refreshToken, option)
+       .cookie("accessToken", accessToken, getCookieOptions())
+       .cookie("refreshToken", refreshToken, getCookieOptions())
        .json(new ApiResponse(200, {user: createdUser}, "Login successful"));
       
 })
@@ -102,16 +100,10 @@ const logoutUser = asyncHandler(async (req, res) => {
     { $unset: { refreshToken: 1 } }
   );
 
-  const options = {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "strict",
-  };
-
   return res
     .status(200)
-    .clearCookie("accessToken", options)
-    .clearCookie("refreshToken", options)
+    .clearCookie("accessToken", getCookieOptions())
+    .clearCookie("refreshToken", getCookieOptions())
     .json(
       new ApiResponse(200, null, "User logged out successfully")
     );
@@ -143,15 +135,10 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     const { accessToken, refreshToken: newRefreshToken } = await generateAccessAndRefreshTokens(user._id);
     user.refreshToken = newRefreshToken;
     await user.save({ validateBeforeSave: false });
-    const options = {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
-      };
     return res
     .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", newRefreshToken, options)
+    .cookie("accessToken", accessToken, getCookieOptions())
+    .cookie("refreshToken", newRefreshToken, getCookieOptions())
     .json(new ApiResponse(200, null, "Access token refreshed successfully"));
 
 
@@ -221,7 +208,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 
   const html = emailVerificationTemplate(
     verificationUrl,
-    user.username
+    user.name
   );
 
   await sendEmail({
@@ -259,7 +246,7 @@ const forgotPassword = asyncHandler(async (req, res) => {
     await user.save({ validateBeforeSave: false });
     const resetUrl = `${process.env.FORGOT_PASSWORD_REDIRECT_URL}?token=${unhashedToken}`;
 
-    const html = passwordResetTemplate(resetUrl, user.username);
+    const html = passwordResetTemplate(resetUrl, user.name);
 
     await sendEmail({
       to: user.email,

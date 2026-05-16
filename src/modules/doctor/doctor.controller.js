@@ -6,6 +6,28 @@ import { UserRoleEnum } from "../../utils/constants.js";
 import { User } from "../user/user.model.js";
 import mongoose from "mongoose";
 
+const updateAvailability = asyncHandler(async (req, res) => {
+  const { availability } = req.body;
+
+  if (!availability || !Array.isArray(availability)) {
+    throw new ApiError(400, "Availability must be an array");
+  }
+
+  const doctor = await Doctor.findOne({ user: req.user._id });
+
+  if (!doctor) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  doctor.availability = availability;
+
+  await doctor.save(); // 🔥 triggers your validations
+
+  return res.status(200).json(
+    new ApiResponse(200, doctor, "Availability updated successfully")
+  );
+});
+
 
 const createDoctorProfile = asyncHandler(async (req, res) => {
 
@@ -260,6 +282,7 @@ export{
      deleteDoctorProfile,
      toggleDoctorAvailability,
      verifyDoctorProfile,
+     updateAvailability
 
 
 }

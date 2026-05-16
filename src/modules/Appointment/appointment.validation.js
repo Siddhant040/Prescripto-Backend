@@ -14,3 +14,12 @@ export const createAppointmentSchema = z.object({
     }
   )
 });
+
+export const rescheduleAppointmentSchema = z.object({
+  appointmentDateTime: z.coerce.date().refine(
+    (date) => date > new Date(),
+    {
+      message: "Appointment must be in the future"
+    }
+  )
+});
