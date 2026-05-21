@@ -7,10 +7,12 @@ import mongoose from "mongoose";
 import { mapAppointmentToDTO } from "./appointment.dto.js";
 import {
   APPOINTMENT_STATUS,
+  NOTIFICATION_TYPES,
   AvailableAppointmentStatus,
   UserRoleEnum
 } from "../../utils/constants.js";
 import { generateSlots, filterBookedSlots } from "../Slot/slot.service.js";
+import { createNotification } from "../notification/notification.controller.js";
 
 const appointmentPopulate = [
   {
@@ -183,6 +185,16 @@ const createAppointment = asyncHandler(async (req, res) => {
     });
 
     appointment = await populateAppointment(appointment);
+
+    await createNotification({
+      recipient: appointment.doctor.user?._id,
+      sender: req.user._id,
+      type: NOTIFICATION_TYPES.APPOINTMENT_BOOKED,
+      title: "New appointment booked",
+      message: `${appointment.patient.name} booked an appointment with you.`,
+      entityId: appointment._id,
+      entityType: "appointment"
+    });
 
     return res.status(201).json(
       new ApiResponse(
@@ -401,6 +413,16 @@ const rescheduleAppointment = asyncHandler(async (req, res) => {
 
     const populatedAppointment = await populateAppointment(appointment);
 
+    await createNotification({
+      recipient: populatedAppointment.doctor.user?._id,
+      sender: req.user._id,
+      type: NOTIFICATION_TYPES.APPOINTMENT_RESCHEDULED,
+      title: "Appointment rescheduled",
+      message: `${populatedAppointment.patient.name} rescheduled the appointment.`,
+      entityId: populatedAppointment._id,
+      entityType: "appointment"
+    });
+
     return res.status(200).json(
       new ApiResponse(
         200,
@@ -464,6 +486,25 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
 
   const populatedAppointment = await populateAppointment(appointment);
 
+  await createNotification({
+    recipient: populatedAppointment.patient._id,
+    sender: req.user._id,
+    type:
+      status === APPOINTMENT_STATUS.COMPLETED
+        ? NOTIFICATION_TYPES.APPOINTMENT_COMPLETED
+        : NOTIFICATION_TYPES.APPOINTMENT_CONFIRMED,
+    title:
+      status === APPOINTMENT_STATUS.COMPLETED
+        ? "Appointment completed"
+        : "Appointment confirmed",
+    message:
+      status === APPOINTMENT_STATUS.COMPLETED
+        ? `${populatedAppointment.doctor.user?.name} marked your appointment as completed.`
+        : `${populatedAppointment.doctor.user?.name} confirmed your appointment.`,
+    entityId: populatedAppointment._id,
+    entityType: "appointment"
+  });
+
   return res.status(200).json(
     new ApiResponse(
       200,
@@ -512,6 +553,31 @@ const cancelAppointment = asyncHandler(async (req, res) => {
   await appointment.save();
 
   const populatedAppointment = await populateAppointment(appointment);
+
+  let recipient = null;
+  const title = "Appointment cancelled";
+  let message = "An appointment was cancelled.";
+
+  if (req.user.role === UserRoleEnum.PATIENT) {
+    recipient = populatedAppointment.doctor.user?._id;
+    message = `${populatedAppointment.patient.name} cancelled the appointment.`;
+  } else if (req.user.role === UserRoleEnum.DOCTOR) {
+    recipient = populatedAppointment.patient._id;
+    message = `${populatedAppointment.doctor.user?.name} cancelled your appointment.`;
+  } else if (req.user.role === UserRoleEnum.ADMIN) {
+    recipient = populatedAppointment.patient._id;
+    message = `An admin cancelled your appointment with ${populatedAppointment.doctor.user?.name}.`;
+  }
+
+  await createNotification({
+    recipient,
+    sender: req.user._id,
+    type: NOTIFICATION_TYPES.APPOINTMENT_CANCELLED,
+    title,
+    message,
+    entityId: populatedAppointment._id,
+    entityType: "appointment"
+  });
 
   return res.status(200).json(
     new ApiResponse(

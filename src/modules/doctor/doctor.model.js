@@ -128,6 +128,10 @@ const doctorSchema = new Schema(
       default: 30, // minutes
       min: 5
     },
+    totalReviews: {
+      type: Number,
+      default: 0
+    },
 
     availability: [
       {
