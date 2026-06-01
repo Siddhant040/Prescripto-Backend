@@ -2,9 +2,10 @@ import {User} from "./user.model.js";
 import {asyncHandler} from "../../utils/asyncHandler.js";
 import { ApiResponse } from "../../errors/apiResponse.js";
 import { ApiError } from "../../errors/apiError.js";   // Import the ApiResponse class from your errors api
-import  { passwordResetTemplate,emailVerificationTemplate, sendEmail } from "../../utils/email.js";
+import { passwordResetTemplate, emailVerificationTemplate, sendEmail } from "../../utils/email.js";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
+import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js";
 
 const getCookieOptions = () => ({
   httpOnly: true,
@@ -149,6 +150,31 @@ const getCurrentUser = asyncHandler(async (req, res) => {
     .status(200)
     .json(new ApiResponse(200, req.user, "User fetched successfully"));
 })
+
+const uploadUserAvatar = asyncHandler(async (req, res) => {
+  if (!req.file) {
+    throw new ApiError(400, "Avatar file is required");
+  }
+
+  const uploadResult = await uploadToCloudinary(req.file.buffer);
+
+  const user = await User.findByIdAndUpdate(
+    req.user._id,
+    { avatar: uploadResult.secure_url },
+    {
+      new: true,
+      runValidators: true,
+    }
+  ).select("-password -refreshToken -emailVerificationToken -emailVerificationTokenExpiry");
+
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, { avatar: user.avatar }, "Avatar uploaded successfully"));
+});
 
 const verifyEmail = asyncHandler(async (req, res) => {
     const { token } = req.params
@@ -339,6 +365,7 @@ export {
    refreshAccessToken,
 
    getCurrentUser,
+   uploadUserAvatar,
 
   verifyEmail,
    resendEmailVerification,

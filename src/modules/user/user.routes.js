@@ -1,13 +1,16 @@
 import { Router } from "express";
-import { registerUser as register, loginUser as login, logoutUser as logout, verifyEmail, resendEmailVerification, forgotPassword, resetPassword, changePassword,refreshAccessToken,getCurrentUser } from "./user.auth.controller.js";
+import { upload } from "../../middleware/multer.middleware.js";
+import { registerUser as register, loginUser as login, logoutUser as logout, verifyEmail, resendEmailVerification, forgotPassword, resetPassword, changePassword, refreshAccessToken, getCurrentUser, uploadUserAvatar } from "./user.auth.controller.js";
 import { authMiddleware } from "../../middleware/auth.middleware.js";
-import{validate} from "../../middleware/validate.middleware.js"
+import { validate } from "../../middleware/validate.middleware.js";
 import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from "./user.auth.validation.js";
 
 const router = Router();
 
 router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
+
+router.post("/upload-avatar", authMiddleware, upload.single("avatar"), uploadUserAvatar);
 
 router.post("/logout", authMiddleware, logout);
 
