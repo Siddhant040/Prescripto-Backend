@@ -37,6 +37,7 @@ import appointmentRoute from './modules/Appointment/appointment.routes.js';
 import reviewRoute from './modules/review/review.routes.js';
 import notificationRoute from './modules/notification/notification.routes.js';
 import adminRoute from './modules/admin/admin.routes.js';
+import paymentRoute from './modules/payment/payment.routes.js';
 
 app.use("/api/v1/healthCheck", healthCheckRoute)
 app.use("/api/v1/auth", userRoute)
@@ -45,6 +46,7 @@ app.use("/api/v1/appointment", appointmentRoute)
 app.use("/api/v1/review", reviewRoute)
 app.use("/api/v1/notification", notificationRoute)
 app.use("/api/v1/admin", adminRoute)
+app.use("/api/v1/payment", paymentRoute)
 app.use(errorHandler)
 
 

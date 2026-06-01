@@ -35,3 +35,19 @@ export const DaysOfWeek = [
   "Friday",
   "Saturday"
 ];
+export const PAYMENT_STATUS = {
+  PENDING: "pending",
+  PAID: "paid",
+  FAILED: "failed",
+  REFUNDED: "refunded"
+};
+
+export const PAYMENT_PROVIDER = {
+  RAZORPAY: "razorpay",
+  STRIPE: "stripe",
+  CASH: "cash"
+}
+
+export const AvailablePaymentStatus = Object.values(PAYMENT_STATUS);
+
+export const AvailablePaymentProvider = Object.values(PAYMENT_PROVIDER);
