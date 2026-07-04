@@ -7,7 +7,7 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 dotenv.config({ path: "./src/.env" });
 
-const allowedOrigin = process.env.Url?.replace(/\/$/, "") || "http://localhost:5173";
+const allowedOrigin = process.env.Url?.replace(/\/$/, "") || "http://localhost:5174";
 const corsOptions = {
     origin: allowedOrigin,
     credentials: true,

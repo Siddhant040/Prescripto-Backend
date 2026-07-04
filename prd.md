@@ -401,3 +401,5 @@ The current phase is successful when:
 - Documentation and testing still trail implementation
 
 ---
+## 13. Gaps
+Implemented full-stack app (React/Vite frontend with routing, `AuthContext`, API client and payment client; Express/Mongo backend with auth, JWT access/refresh cookies, controllers for users/doctors/appointments/payments/notifications/reviews, Cloudinary upload and seeder). Remaining work (priority order): remove/rotate secrets and add `.env.example` + Backend README (critical, 1–2 hrs); verify and harden cookie/refresh-token behavior and document CORS (`withCredentials`) (2–4 hrs); implement frontend token-persistence/automatic refresh (4–8 hrs); add basic security hardening (helmet, rate limiting, input sanitation) (4–8 hrs); add unit/E2E tests for key flows (1–3 days); add CI/CD and containerization (Docker + deploy pipeline) (1–3 days). Total estimated polish time: ~3–10 days depending on depth; critical immediate action: remove .env and rotate credentials.
