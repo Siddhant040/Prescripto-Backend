@@ -24,7 +24,12 @@ const appointmentSchema = new Schema({
     type: String,
     enum: AvailableAppointmentStatus,
     default: APPOINTMENT_STATUS.PENDING
-  }
+  },
+  prescription: {
+  diagnosis: String,
+  medicine: String,
+  instructions: String,
+},
 }, { timestamps: true });
 
 //  Prevent double booking

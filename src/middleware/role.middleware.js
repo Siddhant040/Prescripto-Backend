@@ -9,12 +9,12 @@ export const authorizeRoles = (...allowedRoles) => {
       throw new ApiError(401, "Unauthorized - login required");
     }
 
-    // 2. Role existence check
-    if (!req.user.role) {
-      throw new ApiError(500, "User role not defined");
+    // 2. Roles existence check
+    if (!req.user.roles || req.user.roles.length === 0) {
+      throw new ApiError(500, "User roles not defined");
     }
 
-    // 3. Validate allowedRoles input (NEW)
+    // 3. Validate allowedRoles input
     const invalidRoles = allowedRoles.filter(
       (role) => !AvailableRole.includes(role)
     );
@@ -24,7 +24,11 @@ export const authorizeRoles = (...allowedRoles) => {
     }
 
     // 4. Authorization check
-    if (!allowedRoles.includes(req.user.role)) {
+    const hasRole = req.user.roles.some((role) =>
+      allowedRoles.includes(role)
+    );
+
+    if (!hasRole) {
       throw new ApiError(
         403,
         `Forbidden: requires role ${allowedRoles.join(", ")}`

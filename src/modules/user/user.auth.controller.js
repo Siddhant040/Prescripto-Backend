@@ -367,6 +367,41 @@ if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
   );
 });
 
+const userActiveRole = asyncHandler(async (req, res) => {
+  const { activeRole } = req.body;
+  const user = await User.findById(req.user._id);
+  if (!user) {
+    throw new ApiError(404, "User not found");
+
+  }
+
+   // Check requested role is one the user actually has
+  if (!user.roles.includes(activeRole)) {
+    throw new ApiError(
+      403,
+      "You don't have permission to switch to this role"
+    );
+  }
+  user.activeRole = activeRole;
+  await user.save({ validateBeforeSave: false });
+
+   // Generate new access token because activeRole changed
+  const accessToken = user.generateAccessToken();
+
+  return res
+    .status(200)
+    .cookie("accessToken", accessToken, getCookieOptions())
+    .json(
+      new ApiResponse(
+        200,
+        {
+          user,
+        },
+        "Active role updated successfully"
+      )
+    );
+});
+ 
 
 
 
@@ -397,4 +432,6 @@ export {
   forgotPassword,
   resetPassword,
   changePassword,
+
+  userActiveRole
 }

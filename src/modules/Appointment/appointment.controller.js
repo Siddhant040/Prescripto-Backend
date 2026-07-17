@@ -17,15 +17,15 @@ import { createNotification } from "../notification/notification.controller.js";
 const appointmentPopulate = [
   {
     path: "doctor",
-    select: "user specialization consultationFee",
+    select: "user specialization consultationFee clinicAddress",
     populate: {
       path: "user",
-      select: "name email avatar"
+      select: "name email avatar "
     }
   },
   {
     path: "patient",
-    select: "name email avatar"
+    select: "name email phone address dateOfBirth gender "
   }
 ];
 
@@ -138,7 +138,7 @@ const createAppointment = asyncHandler(async (req, res) => {
   const { doctorId, appointmentDateTime } = req.body;
   const patientId = req.user._id;
 
-  if (req.user.role !== UserRoleEnum.PATIENT) {
+  if (req.user.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can book appointments");
   }
 
@@ -213,7 +213,7 @@ const createAppointment = asyncHandler(async (req, res) => {
 });
 
 const getAppointmentsForUser = asyncHandler(async (req, res) => {
-  if (req.user.role !== UserRoleEnum.PATIENT) {
+  if (req.user.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can view their appointments");
   }
 
@@ -230,6 +230,7 @@ const getAppointmentsForUser = asyncHandler(async (req, res) => {
   if (Number.isNaN(limit) || limit < 1 || limit > 50) {
     limit = 10;
   }
+ 
 
   const query = { patient: patientId };
 
@@ -258,7 +259,7 @@ const getAppointmentsForUser = asyncHandler(async (req, res) => {
 });
 
 const getAppointmentsForDoctor = asyncHandler(async (req, res) => {
-  if (req.user.role !== UserRoleEnum.DOCTOR) {
+  if (req.user.activeRole !== UserRoleEnum.DOCTOR) {
     throw new ApiError(403, "Only doctors can view their appointments");
   }
 
@@ -365,11 +366,11 @@ const rescheduleAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Appointment not found");
   }
 
-  if (req.user.role === UserRoleEnum.PATIENT) {
+  if (req.user.activeRole === UserRoleEnum.PATIENT) {
     if (appointment.patient.toString() !== req.user._id.toString()) {
       throw new ApiError(403, "Forbidden");
     }
-  } else if (req.user.role !== UserRoleEnum.ADMIN) {
+  } else if (req.user.activeRole !== UserRoleEnum.ADMIN) {
     throw new ApiError(403, "Unauthorized");
   }
 
@@ -447,7 +448,7 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid status value");
   }
 
-  if (req.user.role !== UserRoleEnum.DOCTOR) {
+  if (req.user.activeRole !== UserRoleEnum.DOCTOR) {
     throw new ApiError(403, "Only doctors can update appointment status");
   }
 
@@ -527,7 +528,7 @@ const cancelAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Appointment not found");
   }
 
-  if (req.user.role === UserRoleEnum.PATIENT) {
+  if (req.user.activeRole === UserRoleEnum.PATIENT) {
     if (appointment.patient.toString() !== req.user._id.toString()) {
       throw new ApiError(403, "Forbidden");
     }
@@ -535,17 +536,20 @@ const cancelAppointment = asyncHandler(async (req, res) => {
     if (appointment.status !== APPOINTMENT_STATUS.PENDING) {
       throw new ApiError(400, "Only pending appointments can be cancelled");
     }
-  } else if (req.user.role === UserRoleEnum.DOCTOR) {
+  } else if (req.user.activeRole === UserRoleEnum.DOCTOR) {
     const doctor = await Doctor.findOne({ user: req.user._id });
 
     if (!doctor || appointment.doctor.toString() !== doctor._id.toString()) {
       throw new ApiError(403, "Forbidden");
     }
 
-    if (appointment.status === APPOINTMENT_STATUS.COMPLETED) {
+    if (
+    appointment.status === APPOINTMENT_STATUS.COMPLETED ||
+    appointment.status === APPOINTMENT_STATUS.CANCELLED
+){
       throw new ApiError(400, "Completed appointments cannot be cancelled");
     }
-  } else if (req.user.role !== UserRoleEnum.ADMIN) {
+  } else if (req.user.activeRole !== UserRoleEnum.ADMIN) {
     throw new ApiError(403, "Unauthorized");
   }
 
@@ -587,6 +591,65 @@ const cancelAppointment = asyncHandler(async (req, res) => {
     )
   );
 });
+const createPrescription = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid appointment ID");
+  }
+
+  const appointment = await Appointment.findById(id);
+
+  if (!appointment) {
+    throw new ApiError(404, "Appointment not found");
+  }
+
+  if (req.user.activeRole !== UserRoleEnum.DOCTOR) {
+    throw new ApiError(403, "Forbidden");
+  }
+
+  const doctor = await Doctor.findOne({ user: req.user._id });
+
+  if (!doctor || appointment.doctor.toString() !== doctor._id.toString()) {
+    throw new ApiError(403, "Forbidden");
+  }
+
+  if (appointment.status !== APPOINTMENT_STATUS.COMPLETED) {
+    throw new ApiError(400, "Only completed appointments can have prescriptions");  
+
+
+
+  } 
+
+  console.log("Request Body:", req.body);
+
+  const { diagnosis, medicine, instructions } = req.body;
+ 
+
+if (!diagnosis && !medicine && !instructions) {
+  throw new ApiError(
+    400,
+    "At least one prescription field is required"
+  );
+}
+
+  appointment.prescription = {
+    diagnosis,
+    medicine,
+    instructions
+  };
+
+  await appointment.save();
+  const populatedAppointment = await populateAppointment(appointment);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      mapAppointmentToDTO(populatedAppointment),
+      "Prescription created successfully"
+    )
+  );
+})
 
 export {
   createAppointment,
@@ -596,5 +659,6 @@ export {
   rescheduleAppointment,
   updateAppointmentStatus,
   cancelAppointment,
-  getAvailableSlots
+  getAvailableSlots,
+  createPrescription
 };

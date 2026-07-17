@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { AvailableRole } from "../../utils/constants.js";
 
 export const registerSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -63,3 +64,6 @@ export const updateProfileSchema = z.object({
     .max(200, "Address cannot exceed 200 characters")
     .optional(),
 });
+export const updateActiveRoleSchema =  z.object({
+    activeRole: z.enum(AvailableRole),
+  })

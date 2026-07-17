@@ -7,7 +7,8 @@ import {
   deleteDoctorProfile,
   toggleDoctorAvailability,
   verifyDoctorProfile,
-  updateAvailability
+  updateAvailability,
+  getLoginDoctor
 } from "./doctor.controller.js";
 
 import { authMiddleware } from "../../middleware/auth.middleware.js";
@@ -25,6 +26,7 @@ router.patch(
   authorizeRoles("doctor"),
   updateAvailability
 );
+router.get("/me", authMiddleware, getLoginDoctor);
 
 
 //public routes

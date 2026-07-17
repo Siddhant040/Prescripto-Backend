@@ -7,7 +7,8 @@ import {
     rescheduleAppointment,
     updateAppointmentStatus,
     cancelAppointment,
-    getAvailableSlots
+    getAvailableSlots,
+    createPrescription
 } from "./appointment.controller.js";
 
 import {
@@ -76,6 +77,12 @@ router.patch(
   authMiddleware,
   authorizeRoles("patient", "doctor", "admin"),
   cancelAppointment
+);
+router.patch(
+  "/:id/prescription",
+  authMiddleware,
+  authorizeRoles("doctor"),
+  createPrescription
 );
 
 

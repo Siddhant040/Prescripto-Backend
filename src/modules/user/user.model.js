@@ -25,10 +25,18 @@ const userSchema = new Schema({
         trim: true,
         minlength: 6
     },
-    role: {
+    roles: {
+        type: [{
+            type: String,
+            enum: AvailableRole,
+        }],
+        default: [UserRoleEnum.PATIENT],
+    },
+
+    activeRole: {
         type: String,
         enum: AvailableRole,
-        default: UserRoleEnum.PATIENT
+        default: UserRoleEnum.PATIENT,
     },
     avatar: {
         type: String,
@@ -101,7 +109,8 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 userSchema.methods.generateAccessToken = function () {
     return jwt.sign({
         _id: this._id,
-        role: this.role,
+        roles: this.roles,
+        activeRole: this.activeRole,
         email: this.email,
     }, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRES || "15m"

@@ -31,46 +31,55 @@ const updateAvailability = asyncHandler(async (req, res) => {
 
 const createDoctorProfile = asyncHandler(async (req, res) => {
 
-    // get input from request body
-    const {specialization, experience, consultationFee, bio, clinicAddress, qualifications} = req.body
-    //basic validation
-    if (!specialization || experience == null || consultationFee == null|| !qualifications|| !clinicAddress) {
-        throw new ApiError(400, "Required fields missing");
-    }
-    //normalize number fields
-    const normalizedExperience = Number(experience);
-    const normalizedFee = Number(consultationFee);
-    if (isNaN(normalizedExperience) || isNaN(normalizedFee) || normalizedExperience < 0 || normalizedFee < 0) {
-        throw new ApiError(400, "Experience and consultation fee must be valid <positive></positive> numbers");
-    }
-    //prevent duplicate profile creation
-    const existingDoctor = await Doctor.findOne({ user: req.user._id });
-    if (existingDoctor) {
-        throw new ApiError(409, "Doctor profile already exists");
-    }
-    //create doctor profile
+  // get input from request body
+  const { specialization, experience, consultationFee, bio, clinicAddress, qualifications } = req.body
+  //basic validation
+  if (!specialization || experience == null || consultationFee == null || !qualifications || !clinicAddress) {
+    throw new ApiError(400, "Required fields missing");
+  }
+  //normalize number fields
+  const normalizedExperience = Number(experience);
+  const normalizedFee = Number(consultationFee);
+  if (isNaN(normalizedExperience) || isNaN(normalizedFee) || normalizedExperience < 0 || normalizedFee < 0) {
+    throw new ApiError(400, "Experience and consultation fee must be valid <positive></positive> numbers");
+  }
+  //prevent duplicate profile creation
+  const existingDoctor = await Doctor.findOne({ user: req.user._id });
+  if (existingDoctor) {
+    throw new ApiError(409, "Doctor profile already exists");
+  }
+  //create doctor profile
 
-    const doctor = await Doctor.create({
-        user: req.user._id,
-        specialization,
-        experience: normalizedExperience,
-        consultationFee: normalizedFee,
-        bio,
-     clinicAddress,
-        qualifications
-    });
-    //upgrade user role to doctor
+  const doctor = await Doctor.create({
+    user: req.user._id,
+    specialization,
+    experience: normalizedExperience,
+    consultationFee: normalizedFee,
+    bio,
+    clinicAddress,
+    qualifications
+  });
+  // Upgrade user to doctor while keeping patient role
 
-    if(req.user.role !== UserRoleEnum.DOCTOR){
-        await User.findByIdAndUpdate(req.user._id, { role: UserRoleEnum.DOCTOR });
-        
-    }
-    
-    //return response
+  const user = await User.findById(req.user._id);
 
-    return res.status(201).json(new ApiResponse(201,doctor, "Doctor profile created successfully"));
+  if (!user) {
+    throw new ApiError(404, "User not found");
+  }
 
-}) 
+  if (!user.roles.includes(UserRoleEnum.DOCTOR)) {
+    user.roles.push(UserRoleEnum.DOCTOR);
+  }
+
+  user.activeRole = UserRoleEnum.DOCTOR;
+
+  await user.save();
+
+  //return response
+
+  return res.status(201).json(new ApiResponse(201, doctor, "Doctor profile created successfully"));
+
+})
 
 const getAllDoctors = asyncHandler(async (req, res) => {
 
@@ -191,7 +200,7 @@ const updateDoctorProfile = asyncHandler(async (req, res) => {
 
   // 5. Response
   return res.status(200).json(
-    new ApiResponse(200, doctor, "Doctor profile updated successfully")
+    new ApiResponse(200, doctor, "User profile updated successfully")
   );
 });
 const deleteDoctorProfile = asyncHandler(async (req, res) => {
@@ -207,8 +216,13 @@ const deleteDoctorProfile = asyncHandler(async (req, res) => {
   await doctor.deleteOne();
 
   // 3. Downgrade user role back to patient
-  req.user.role = UserRoleEnum.PATIENT;
-  await req.user.save();
+ req.user.activeRole = UserRoleEnum.PATIENT;
+
+req.user.roles = req.user.roles.filter(
+    role => role !== UserRoleEnum.DOCTOR
+);
+
+await req.user.save();
 
   // 4. Response
   return res.status(200).json(
@@ -271,18 +285,35 @@ const verifyDoctorProfile = asyncHandler(async (req, res) => {
     new ApiResponse(200, doctor, "Doctor verified successfully")
   );
 });
+const getLoginDoctor = asyncHandler(async (req, res) => {
+
+  // 1. Find doctor linked to logged-in user
+  const doctor = await Doctor.findOne(
+    { user: req.user._id }
+  ).populate("user");
+
+  if (!doctor) {
+    throw new ApiError(404, "Doctor profile not found");
+  }
+
+  // 2. Response
+  return res.status(200).json(
+    new ApiResponse(200, doctor, "Doctor fetched successfully")
+  );
+})
 
 
 
-export{
-    createDoctorProfile,
-     getAllDoctors,
-     getDoctorById,
-     updateDoctorProfile,
-     deleteDoctorProfile,
-     toggleDoctorAvailability,
-     verifyDoctorProfile,
-     updateAvailability
+export {
+  createDoctorProfile,
+  getAllDoctors,
+  getDoctorById,
+  updateDoctorProfile,
+  deleteDoctorProfile,
+  toggleDoctorAvailability,
+  verifyDoctorProfile,
+  updateAvailability,
+  getLoginDoctor
 
 
 }
