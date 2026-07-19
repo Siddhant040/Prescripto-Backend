@@ -3,6 +3,7 @@ export const mapAppointmentToDTO = (appointment) => ({
   date: appointment.appointmentDateTime,
   status: appointment.status,
   prescription : appointment.prescription,
+  paymentStatus: appointment.paymentStatus,
 
   doctor: appointment.doctor && {
     id: appointment.doctor._id,

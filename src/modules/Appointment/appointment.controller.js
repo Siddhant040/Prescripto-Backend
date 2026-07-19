@@ -3,6 +3,7 @@ import { Doctor } from "../doctor/doctor.model.js";
 import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../errors/apiError.js";
 import { ApiResponse } from "../../errors/apiResponse.js";
+import { Payment } from "../payment/payment.model.js";
 import mongoose from "mongoose";
 import { mapAppointmentToDTO } from "./appointment.dto.js";
 import {
@@ -320,14 +321,22 @@ const getAppointmentsById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid appointment ID");
   }
 
-  const appointment = await Appointment.findById(id).populate(
-    appointmentPopulate
-  );
+ const appointmentDoc = await Appointment.findById(id).populate(
+  appointmentPopulate
+);
 
-  if (!appointment) {
-    throw new ApiError(404, "Appointment not found");
-  }
+if (!appointmentDoc) {
+  throw new ApiError(404, "Appointment not found");
+}
+console.log("appointmentDoc",  appointmentDoc._id);
+const payment = await Payment.findOne({
+  appointment: appointmentDoc._id,
+}).select("status");
+console.log("payment",  payment);
 
+const appointment = appointmentDoc.toObject();
+
+appointment.paymentStatus = payment?.status ?? null;
   if (
     req.user.role === UserRoleEnum.PATIENT &&
     appointment.patient._id.toString() !== req.user._id.toString()

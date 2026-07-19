@@ -90,7 +90,7 @@ const verifyRazorpaySignature = ({
 const createPaymentOrder = asyncHandler(async (req, res) => {
   const { appointmentId, provider, currency = "INR" } = req.body;
 
-  if (req.user.role !== UserRoleEnum.PATIENT) {
+  if (req.user.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can create payment orders");
   }
 
