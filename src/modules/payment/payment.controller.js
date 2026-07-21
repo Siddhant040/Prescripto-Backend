@@ -295,9 +295,9 @@ const getMyPayments = asyncHandler(async (req, res) => {
 
   const query = {};
 
-  if (req.user.role === UserRoleEnum.PATIENT) {
+  if (req.user.activeRole === UserRoleEnum.PATIENT) {
     query.patient = req.user._id;
-  } else if (req.user.role === UserRoleEnum.DOCTOR) {
+  } else if (req.user.activeRole === UserRoleEnum.DOCTOR) {
     const doctor = await Doctor.findOne({ user: req.user._id });
 
     if (!doctor) {
@@ -305,7 +305,7 @@ const getMyPayments = asyncHandler(async (req, res) => {
     }
 
     query.doctor = doctor._id;
-  } else if (req.user.role !== UserRoleEnum.ADMIN) {
+  } else if (req.user.activeRole !== UserRoleEnum.ADMIN) {
     throw new ApiError(403, "Unauthorized");
   }
 
@@ -346,17 +346,17 @@ const getPaymentById = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Payment not found");
   }
 
-  if (req.user.role === UserRoleEnum.PATIENT) {
+  if (req.user.activeRole === UserRoleEnum.PATIENT) {
     if (payment.patient._id.toString() !== req.user._id.toString()) {
       throw new ApiError(403, "Forbidden");
     }
-  } else if (req.user.role === UserRoleEnum.DOCTOR) {
+  } else if (req.user.activeRole === UserRoleEnum.DOCTOR) {
     const doctor = await Doctor.findOne({ user: req.user._id });
 
     if (!doctor || payment.doctor._id.toString() !== doctor._id.toString()) {
       throw new ApiError(403, "Forbidden");
     }
-  } else if (req.user.role !== UserRoleEnum.ADMIN) {
+  } else if (req.user.activeRole !== UserRoleEnum.ADMIN) {
     throw new ApiError(403, "Unauthorized");
   }
 
