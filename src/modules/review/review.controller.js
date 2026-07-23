@@ -62,7 +62,7 @@ const recalculateDoctorRating = async (doctorId) => {
 const createReview = asyncHandler(async (req, res) => {
   const { appointmentId, review, rating } = req.body;
 
-  if (req.user?.role !== UserRoleEnum.PATIENT) {
+  if (req.user?.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can create reviews");
   }
 
@@ -84,19 +84,66 @@ const createReview = asyncHandler(async (req, res) => {
   }
 
   if (appointment.status !== APPOINTMENT_STATUS.COMPLETED) {
-    throw new ApiError(400, "Review is allowed only for completed appointments");
+    throw new ApiError(
+      400,
+      "Review is allowed only for completed appointments"
+    );
   }
 
+  // Check if an active review already exists
   const existingReview = await Review.findOne({
     appointment: appointment._id,
     patient: req.user._id,
-    isDeleted: false
+    isDeleted: false,
   });
 
   if (existingReview) {
-    throw new ApiError(409, "You have already submitted a review for this appointment");
+    throw new ApiError(
+      409,
+      "You have already submitted a review for this appointment"
+    );
   }
 
+  // Check if a soft-deleted review exists
+  const deletedReview = await Review.findOne({
+    appointment: appointment._id,
+    patient: req.user._id,
+    isDeleted: true,
+  });
+
+  // Restore the deleted review instead of creating a new one
+  if (deletedReview) {
+    deletedReview.rating = rating;
+    deletedReview.review = review;
+    deletedReview.isDeleted = false;
+    deletedReview.isEdited = false;
+
+    await deletedReview.save();
+
+    const populatedReview = await deletedReview.populate(reviewPopulate);
+
+    await recalculateDoctorRating(deletedReview.doctor);
+
+    await createNotification({
+      recipient: populatedReview.doctor.user?._id,
+      sender: req.user._id,
+      type: NOTIFICATION_TYPES.REVIEW_CREATED,
+      title: "New review received",
+      message: `${populatedReview.patient.name} left a new review for you.`,
+      entityId: populatedReview._id,
+      entityType: "review",
+    });
+
+    return res.status(200).json(
+      new ApiResponse(
+        200,
+        mapReviewToDTO(populatedReview),
+        "Review created successfully"
+      )
+    );
+  }
+
+  // Create a brand new review
   let createdReview;
 
   try {
@@ -105,18 +152,23 @@ const createReview = asyncHandler(async (req, res) => {
       doctor: appointment.doctor,
       appointment: appointment._id,
       rating,
-      review
+      review,
     });
   } catch (error) {
     if (error.code === 11000) {
-      throw new ApiError(409, "Only one review is allowed per appointment");
+      throw new ApiError(
+        409,
+        "Only one review is allowed per appointment"
+      );
     }
 
     throw error;
   }
 
   const populatedReview = await createdReview.populate(reviewPopulate);
+
   await recalculateDoctorRating(createdReview.doctor);
+
   await createNotification({
     recipient: populatedReview.doctor.user?._id,
     sender: req.user._id,
@@ -124,7 +176,7 @@ const createReview = asyncHandler(async (req, res) => {
     title: "New review received",
     message: `${populatedReview.patient.name} left a new review for you.`,
     entityId: populatedReview._id,
-    entityType: "review"
+    entityType: "review",
   });
 
   return res.status(201).json(
@@ -137,11 +189,13 @@ const createReview = asyncHandler(async (req, res) => {
 });
 
 const getReviewsByDoctor = asyncHandler(async (req, res) => {
-  const { doctorId } = req.params;
+ const doctor = await Doctor.findOne({ user: req.user._id });
 
-  if (!mongoose.Types.ObjectId.isValid(doctorId)) {
-    throw new ApiError(400, "Invalid doctor ID");
-  }
+if (!doctor) {
+  throw new ApiError(404, "Doctor not found");
+}
+
+
 
   let { page = 1, limit = 10 } = req.query;
   page = Number(page);
@@ -156,7 +210,7 @@ const getReviewsByDoctor = asyncHandler(async (req, res) => {
   }
 
   const query = {
-    doctor: doctorId,
+    doctor: doctor._id,
     isDeleted: false
   };
 
@@ -185,7 +239,7 @@ const getReviewsByDoctor = asyncHandler(async (req, res) => {
 });
 
 const getReviewsByPatient = asyncHandler(async (req, res) => {
-  if (req.user?.role !== UserRoleEnum.PATIENT) {
+  if (req.user?.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can view their reviews");
   }
 
@@ -215,6 +269,8 @@ const getReviewsByPatient = asyncHandler(async (req, res) => {
       .lean(),
     Review.countDocuments(query)
   ]);
+  console.log(reviews);
+  
 
   return res.status(200).json(
     new ApiResponse(
@@ -255,7 +311,7 @@ const updateReview = asyncHandler(async (req, res) => {
   const { id } = req.params;
   const { rating, review } = req.body;
 
-  if (req.user?.role !== UserRoleEnum.PATIENT) {
+  if (req.user?.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can update reviews");
   }
 
@@ -302,7 +358,7 @@ const updateReview = asyncHandler(async (req, res) => {
 const deleteReview = asyncHandler(async (req, res) => {
   const { id } = req.params;
 
-  if (req.user?.role !== UserRoleEnum.PATIENT) {
+  if (req.user?.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can delete reviews");
   }
 
@@ -322,6 +378,7 @@ const deleteReview = asyncHandler(async (req, res) => {
   if (review.patient.toString() !== req.user._id.toString()) {
     throw new ApiError(403, "You can only delete your own review");
   }
+  
 
   review.isDeleted = true;
   await review.save();

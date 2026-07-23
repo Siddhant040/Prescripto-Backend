@@ -4,7 +4,8 @@ import {
   failPayment,
   getMyPayments,
   getPaymentById,
-  verifyPayment
+  verifyPayment,
+  getPaymentReceipt
 } from "./payment.controller.js";
 import {
   createPaymentOrderSchema,
@@ -60,5 +61,16 @@ router.get(
   ),
   getPaymentById
 );
+router.get(
+  "/:id/receipt",
+  authorizeRoles(
+    UserRoleEnum.PATIENT,
+    UserRoleEnum.DOCTOR,
+    UserRoleEnum.ADMIN
+  ),
+  getPaymentReceipt
+);
+    
+  
 
 export default router;

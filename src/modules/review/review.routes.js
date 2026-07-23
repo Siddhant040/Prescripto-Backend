@@ -23,7 +23,12 @@ router.post(
   createReview
 );
 
-router.get("/doctor/:doctorId", getReviewsByDoctor);
+router.get(
+  "/doctor/me",
+  authMiddleware,
+  authorizeRoles("doctor"),
+  getReviewsByDoctor
+);
 
 router.get(
   "/me",

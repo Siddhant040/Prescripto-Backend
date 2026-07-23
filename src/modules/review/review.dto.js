@@ -16,7 +16,7 @@ export const mapReviewToDTO = (review) => ({
 
   doctor: review.doctor && {
     id: review.doctor._id ?? review.doctor,
-    userId: review.doctor.user?._id,
+    userId: review.doctor.user?.id,
     name: review.doctor.user?.name,
     email: review.doctor.user?.email,
     avatar: review.doctor.user?.avatar,

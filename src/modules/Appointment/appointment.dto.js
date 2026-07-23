@@ -4,6 +4,15 @@ export const mapAppointmentToDTO = (appointment) => ({
   status: appointment.status,
   prescription : appointment.prescription,
   paymentStatus: appointment.paymentStatus,
+  review: appointment.review
+  ?  {
+       id: appointment.review._id,
+        rating: appointment.review.rating,
+        review: appointment.review.review,
+        createdAt: appointment.review.createdAt,
+        updatedAt: appointment.review.updatedAt,
+   }
+  : null,
 
   doctor: appointment.doctor && {
     id: appointment.doctor._id,
@@ -26,5 +35,7 @@ export const mapAppointmentToDTO = (appointment) => ({
     phone: appointment.patient.phone,
     address: appointment.patient.address
 
-  }
+  },
+   
+    
 });

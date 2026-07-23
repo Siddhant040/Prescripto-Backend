@@ -4,6 +4,7 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import { ApiError } from "../../errors/apiError.js";
 import { ApiResponse } from "../../errors/apiResponse.js";
 import { Payment } from "../payment/payment.model.js";
+
 import mongoose from "mongoose";
 import { mapAppointmentToDTO } from "./appointment.dto.js";
 import {
@@ -14,6 +15,7 @@ import {
 } from "../../utils/constants.js";
 import { generateSlots, filterBookedSlots } from "../Slot/slot.service.js";
 import { createNotification } from "../notification/notification.controller.js";
+import { Review } from "../review/review.model.js";
 
 const appointmentPopulate = [
   {
@@ -328,23 +330,35 @@ const getAppointmentsById = asyncHandler(async (req, res) => {
 if (!appointmentDoc) {
   throw new ApiError(404, "Appointment not found");
 }
-console.log("appointmentDoc",  appointmentDoc._id);
-const payment = await Payment.findOne({
-  appointment: appointmentDoc._id,
-}).select("status");
-console.log("payment",  payment);
+
+const [payment, review] = await Promise.all([
+  Payment.findOne({
+    appointment: appointmentDoc._id,
+  }).select("status"),
+
+  Review.findOne({
+    appointment: appointmentDoc._id,
+     isDeleted: false,
+  }).select(" _id rating review createdAt updatedAt"),
+]);
+
 
 const appointment = appointmentDoc.toObject();
-
+;
+  console.log("Payment:", payment);
+console.log("Payment Status:", payment?.status);
+console.log("Review from DB:", review);
 appointment.paymentStatus = payment?.status ?? null;
+
+appointment.review = review ?? null;
   if (
-    req.user.role === UserRoleEnum.PATIENT &&
+    req.user.activeRole === UserRoleEnum.PATIENT &&
     appointment.patient._id.toString() !== req.user._id.toString()
   ) {
     throw new ApiError(403, "Forbidden");
   }
 
-  if (req.user.role === UserRoleEnum.DOCTOR) {
+  if (req.user.activeRole === UserRoleEnum.DOCTOR) {
     const doctor = await Doctor.findOne({ user: req.user._id });
 
     if (!doctor || doctor._id.toString() !== appointment.doctor._id.toString()) {
@@ -465,36 +479,63 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid appointment ID");
   }
 
-  const appointment = await Appointment.findById(id);
+  const appointmentDoc = await Appointment.findById(id);
 
-  if (!appointment) {
+  if (!appointmentDoc) {
     throw new ApiError(404, "Appointment not found");
   }
 
   const doctor = await Doctor.findOne({ user: req.user._id });
 
-  if (!doctor || appointment.doctor.toString() !== doctor._id.toString()) {
+  if (!doctor || appointmentDoc.doctor.toString() !== doctor._id.toString()) {
     throw new ApiError(403, "Unauthorized");
   }
 
   const allowedTransitions = {
     [APPOINTMENT_STATUS.PENDING]: [
       APPOINTMENT_STATUS.CONFIRMED,
-      APPOINTMENT_STATUS.CANCELLED
+      APPOINTMENT_STATUS.CANCELLED,
     ],
     [APPOINTMENT_STATUS.CONFIRMED]: [APPOINTMENT_STATUS.COMPLETED],
     [APPOINTMENT_STATUS.COMPLETED]: [],
-    [APPOINTMENT_STATUS.CANCELLED]: []
+    [APPOINTMENT_STATUS.CANCELLED]: [],
   };
 
-  if (!allowedTransitions[appointment.status].includes(status)) {
-    throw new ApiError(400, "Invalid transition");
-  }
+  if (!allowedTransitions[appointmentDoc.status].includes(status)) {
+  throw new ApiError(400, "Invalid transition");
+}
 
-  appointment.status = status;
-  await appointment.save();
+appointmentDoc.status = status;
+await appointmentDoc.save();
 
-  const populatedAppointment = await populateAppointment(appointment);
+const populatedAppointment = await populateAppointment(appointmentDoc);
+
+  const [payment, review] = await Promise.all([
+    Payment.findOne({
+      appointment: populatedAppointment._id,
+    }).select("status"),
+
+    Review.findOne({
+      appointment: populatedAppointment._id,
+       isDeleted: false,
+    }).select("rating review createdAt updatedAt"),
+  ]);
+
+  const appointment = populatedAppointment.toObject();
+    console.log("Payment:", payment);
+console.log("Payment Status:", payment?.status);
+
+  appointment.paymentStatus = payment?.status ?? null;
+  appointment.review = review
+    ? {
+        _id: review._id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+      }
+    : null;
+  
 
   await createNotification({
     recipient: populatedAppointment.patient._id,
@@ -512,13 +553,13 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
         ? `${populatedAppointment.doctor.user?.name} marked your appointment as completed.`
         : `${populatedAppointment.doctor.user?.name} confirmed your appointment.`,
     entityId: populatedAppointment._id,
-    entityType: "appointment"
+    entityType: "appointment",
   });
 
   return res.status(200).json(
     new ApiResponse(
       200,
-      mapAppointmentToDTO(populatedAppointment),
+      mapAppointmentToDTO(appointment),
       "Status updated"
     )
   );

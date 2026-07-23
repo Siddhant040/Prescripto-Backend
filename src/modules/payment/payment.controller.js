@@ -13,6 +13,7 @@ import { Appointment } from "../Appointment/appointment.model.js";
 import { Doctor } from "../doctor/doctor.model.js";
 import { mapPaymentToDTO, mapPaymentsToDTO } from "./payment.dto.js";
 import { Payment } from "./payment.model.js";
+import {generateReceiptPDF} from "../../services/receipt.service.js"
 
 const paymentPopulate = [
   {
@@ -368,11 +369,56 @@ const getPaymentById = asyncHandler(async (req, res) => {
     )
   );
 });
+const getPaymentReceipt = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid payment ID");
+  }
+
+  const payment = await Payment.findById(id).populate(paymentPopulate);
+
+  if (!payment) {
+    throw new ApiError(404, "Payment not found");
+  }
+
+  if (req.user.activeRole === UserRoleEnum.PATIENT) {
+    if (payment.patient._id.toString() !== req.user._id.toString()) {
+      throw new ApiError(403, "Forbidden");
+    }
+  } else if (req.user.activeRole === UserRoleEnum.DOCTOR) {
+    const doctor = await Doctor.findOne({ user: req.user._id });
+
+    if (!doctor || payment.doctor._id.toString() !== doctor._id.toString()) {
+      throw new ApiError(403, "Forbidden");
+    }
+  } else if (req.user.activeRole !== UserRoleEnum.ADMIN) {
+    throw new ApiError(403, "Forbidden");
+  }
+
+  if (payment.status !== PAYMENT_STATUS.PAID) {
+    throw new ApiError(400, "Receipt is available only for paid payments.");
+  }
+const pdf = await generateReceiptPDF(payment);
+
+res.setHeader("Content-Type", "application/pdf");
+res.setHeader(
+  "Content-Disposition",
+  `attachment; filename=receipt-${payment._id}.pdf`
+);
+res.setHeader("Content-Length", pdf.length);
+
+return res.end(pdf);
+  
+
+ 
+});
 
 export {
   createPaymentOrder,
   verifyPayment,
   failPayment,
   getMyPayments,
-  getPaymentById
+  getPaymentById,
+  getPaymentReceipt
 };
