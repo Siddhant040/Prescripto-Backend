@@ -21,7 +21,14 @@ export const NOTIFICATION_TYPES = {
   APPOINTMENT_RESCHEDULED: "appointment_rescheduled",
   APPOINTMENT_CONFIRMED: "appointment_confirmed",
   APPOINTMENT_COMPLETED: "appointment_completed",
-  REVIEW_CREATED: "review_created"
+  PAYMENT_SUCCESS: "payment_success",
+  PAYMENT_FAILED: "payment_failed",
+
+  REVIEW_RECEIVED: "review_received",
+
+  DOCTOR_VERIFIED: "doctor_verified",
+
+  SYSTEM: "system"
 };
 
 export const AvailableNotificationTypes = Object.values(NOTIFICATION_TYPES);

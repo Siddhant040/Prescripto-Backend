@@ -189,15 +189,19 @@ const createAppointment = asyncHandler(async (req, res) => {
 
     appointment = await populateAppointment(appointment);
 
-    await createNotification({
-      recipient: appointment.doctor.user?._id,
-      sender: req.user._id,
-      type: NOTIFICATION_TYPES.APPOINTMENT_BOOKED,
-      title: "New appointment booked",
-      message: `${appointment.patient.name} booked an appointment with you.`,
-      entityId: appointment._id,
-      entityType: "appointment"
-    });
+   try {
+  await createNotification({
+    recipient: appointment.doctor.user._id,
+    sender: req.user._id,
+    type: NOTIFICATION_TYPES.APPOINTMENT_BOOKED,
+    title: "New Appointment Booked",
+    message: `${appointment.patient.name} booked an appointment with you.`,
+    entityId: appointment._id,
+    entityType: "appointment",
+  });
+} catch (error) {
+  console.error("Failed to create notification:", error);
+}
 
     return res.status(201).json(
       new ApiResponse(
