@@ -189,19 +189,19 @@ const createAppointment = asyncHandler(async (req, res) => {
 
     appointment = await populateAppointment(appointment);
 
-   try {
-  await createNotification({
-    recipient: appointment.doctor.user._id,
-    sender: req.user._id,
-    type: NOTIFICATION_TYPES.APPOINTMENT_BOOKED,
-    title: "New Appointment Booked",
-    message: `${appointment.patient.name} booked an appointment with you.`,
-    entityId: appointment._id,
-    entityType: "appointment",
-  });
-} catch (error) {
-  console.error("Failed to create notification:", error);
-}
+    try {
+      await createNotification({
+        recipient: appointment.doctor.user._id,
+        sender: req.user._id,
+        type: NOTIFICATION_TYPES.APPOINTMENT_BOOKED,
+        title: "New Appointment Booked",
+        message: `${appointment.patient.name} booked an appointment with you.`,
+        entityId: appointment._id,
+        entityType: "appointment",
+      });
+    } catch (error) {
+      console.error("Failed to create notification:", error);
+    }
 
     return res.status(201).json(
       new ApiResponse(
@@ -237,7 +237,7 @@ const getAppointmentsForUser = asyncHandler(async (req, res) => {
   if (Number.isNaN(limit) || limit < 1 || limit > 50) {
     limit = 10;
   }
- 
+
 
   const query = { patient: patientId };
 
@@ -327,34 +327,34 @@ const getAppointmentsById = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid appointment ID");
   }
 
- const appointmentDoc = await Appointment.findById(id).populate(
-  appointmentPopulate
-);
+  const appointmentDoc = await Appointment.findById(id).populate(
+    appointmentPopulate
+  );
 
-if (!appointmentDoc) {
-  throw new ApiError(404, "Appointment not found");
-}
+  if (!appointmentDoc) {
+    throw new ApiError(404, "Appointment not found");
+  }
 
-const [payment, review] = await Promise.all([
-  Payment.findOne({
-    appointment: appointmentDoc._id,
-  }).select("status"),
+  const [payment, review] = await Promise.all([
+    Payment.findOne({
+      appointment: appointmentDoc._id,
+    }).select("status"),
 
-  Review.findOne({
-    appointment: appointmentDoc._id,
-     isDeleted: false,
-  }).select(" _id rating review createdAt updatedAt"),
-]);
+    Review.findOne({
+      appointment: appointmentDoc._id,
+      isDeleted: false,
+    }).select(" _id rating review createdAt updatedAt"),
+  ]);
 
 
-const appointment = appointmentDoc.toObject();
-;
+  const appointment = appointmentDoc.toObject();
+  ;
   console.log("Payment:", payment);
-console.log("Payment Status:", payment?.status);
-console.log("Review from DB:", review);
-appointment.paymentStatus = payment?.status ?? null;
+  console.log("Payment Status:", payment?.status);
+  console.log("Review from DB:", review);
+  appointment.paymentStatus = payment?.status ?? null;
 
-appointment.review = review ?? null;
+  appointment.review = review ?? null;
   if (
     req.user.activeRole === UserRoleEnum.PATIENT &&
     appointment.patient._id.toString() !== req.user._id.toString()
@@ -506,13 +506,13 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
   };
 
   if (!allowedTransitions[appointmentDoc.status].includes(status)) {
-  throw new ApiError(400, "Invalid transition");
-}
+    throw new ApiError(400, "Invalid transition");
+  }
 
-appointmentDoc.status = status;
-await appointmentDoc.save();
+  appointmentDoc.status = status;
+  await appointmentDoc.save();
 
-const populatedAppointment = await populateAppointment(appointmentDoc);
+  const populatedAppointment = await populateAppointment(appointmentDoc);
 
   const [payment, review] = await Promise.all([
     Payment.findOne({
@@ -521,25 +521,25 @@ const populatedAppointment = await populateAppointment(appointmentDoc);
 
     Review.findOne({
       appointment: populatedAppointment._id,
-       isDeleted: false,
+      isDeleted: false,
     }).select("rating review createdAt updatedAt"),
   ]);
 
   const appointment = populatedAppointment.toObject();
-    console.log("Payment:", payment);
-console.log("Payment Status:", payment?.status);
+  console.log("Payment:", payment);
+  console.log("Payment Status:", payment?.status);
 
   appointment.paymentStatus = payment?.status ?? null;
   appointment.review = review
     ? {
-        _id: review._id,
-        rating: review.rating,
-        comment: review.comment,
-        createdAt: review.createdAt,
-        updatedAt: review.updatedAt,
-      }
+      _id: review._id,
+      rating: review.rating,
+      comment: review.comment,
+      createdAt: review.createdAt,
+      updatedAt: review.updatedAt,
+    }
     : null;
-  
+
 
   await createNotification({
     recipient: populatedAppointment.patient._id,
@@ -598,9 +598,9 @@ const cancelAppointment = asyncHandler(async (req, res) => {
     }
 
     if (
-    appointment.status === APPOINTMENT_STATUS.COMPLETED ||
-    appointment.status === APPOINTMENT_STATUS.CANCELLED
-){
+      appointment.status === APPOINTMENT_STATUS.COMPLETED ||
+      appointment.status === APPOINTMENT_STATUS.CANCELLED
+    ) {
       throw new ApiError(400, "Completed appointments cannot be cancelled");
     }
   } else if (req.user.activeRole !== UserRoleEnum.ADMIN) {
@@ -669,23 +669,23 @@ const createPrescription = asyncHandler(async (req, res) => {
   }
 
   if (appointment.status !== APPOINTMENT_STATUS.COMPLETED) {
-    throw new ApiError(400, "Only completed appointments can have prescriptions");  
+    throw new ApiError(400, "Only completed appointments can have prescriptions");
 
 
 
-  } 
+  }
 
   console.log("Request Body:", req.body);
 
   const { diagnosis, medicine, instructions } = req.body;
- 
 
-if (!diagnosis && !medicine && !instructions) {
-  throw new ApiError(
-    400,
-    "At least one prescription field is required"
-  );
-}
+
+  if (!diagnosis && !medicine && !instructions) {
+    throw new ApiError(
+      400,
+      "At least one prescription field is required"
+    );
+  }
 
   appointment.prescription = {
     diagnosis,

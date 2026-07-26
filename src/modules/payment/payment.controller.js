@@ -204,9 +204,17 @@ const verifyPayment = asyncHandler(async (req, res) => {
   const { providerOrderId, providerPaymentId, providerSignature } = req.body;
 
   const payment = await Payment.findOne({
-    providerOrderId,
-    status: PAYMENT_STATUS.PENDING
-  });
+  providerOrderId,
+  status: PAYMENT_STATUS.PENDING
+})
+.populate("patient", "name")
+.populate({
+  path: "appointment",
+  populate: {
+    path: "doctor",
+    select: "user"
+  }
+});
 
   if (!payment) {
     throw new ApiError(404, "Pending payment order not found");
@@ -236,6 +244,30 @@ const verifyPayment = asyncHandler(async (req, res) => {
   payment.failureReason = undefined;
 
   await payment.save();
+  
+  
+  try{
+    await createNotification({
+    recipient: payment.patient,
+    sender: null,
+    type: NOTIFICATION_TYPES.PAYMENT_SUCCESS,
+    title: "Payment Successful",
+    message: `Your payment of ₹${payment.amount} has been received successfully.`,
+    entityId: payment._id,
+    entityType: "payment"
+});
+  }catch(error){
+    console.log("unable to create notifiction")
+  }
+  await createNotification({
+    recipient: payment.appointment.doctor.user,
+    sender: payment.patient._id,
+    type: NOTIFICATION_TYPES.PAYMENT_SUCCESS,
+    title: "Payment Received",
+    message: `${payment.patient.name} has successfully paid the consultation fee.`,
+    entityId: payment._id,
+    entityType: "payment",
+});
 
   const populatedPayment = await payment.populate(paymentPopulate);
 
