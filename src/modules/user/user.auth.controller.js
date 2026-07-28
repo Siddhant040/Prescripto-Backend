@@ -6,6 +6,7 @@ import { passwordResetTemplate, emailVerificationTemplate, sendEmail } from "../
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js";
+import { UserRoleEnum } from "../../utils/constants.js";
 
 const getCookieOptions = () => ({
   httpOnly: true,
@@ -70,7 +71,20 @@ const loginUser = asyncHandler(async (req, res) => {
   }
   if (!user.isEmailVerified) {
     throw new ApiError(400, "Please verify your email");
+
   }
+  const allowedRoles = [
+  UserRoleEnum.PATIENT,
+  UserRoleEnum.DOCTOR,
+];
+
+if (!allowedRoles.includes(user.activeRole)) {
+  throw new ApiError(
+    403,
+    "You are not authorized to access the user portal."
+  );
+}
+   
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
   const createdUser = await User.findById(user._id).select(
     "-password -emailVerificationToken -emailVerificationTokenExpiry -refreshToken"
@@ -82,8 +96,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, getCookieOptions())
-    .cookie("refreshToken", refreshToken, getCookieOptions())
+    .cookie("userAccessToken", accessToken, getCookieOptions())
+    .cookie("userRefreshToken", refreshToken, getCookieOptions())
     .json(new ApiResponse(200, { user: createdUser }, "Login successful"));
 
 })
@@ -401,6 +415,7 @@ const userActiveRole = asyncHandler(async (req, res) => {
       )
     );
 });
+
  
 
 
@@ -419,6 +434,7 @@ export {
   registerUser,
   loginUser,
   logoutUser,
+  
 
   refreshAccessToken,
 
@@ -434,4 +450,5 @@ export {
   changePassword,
 
   userActiveRole
+
 }

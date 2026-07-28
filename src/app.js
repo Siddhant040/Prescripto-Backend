@@ -7,7 +7,10 @@ import { errorHandler } from "./middleware/error.middleware.js";
 
 dotenv.config({ path: "./src/.env" });
 
-const allowedOrigin = process.env.Url?.replace(/\/$/, "") || "http://localhost:5174";
+const allowedOrigin = [
+  process.env.CLIENT_URL,
+  process.env.ADMIN_URL,
+].filter(Boolean);
 const corsOptions = {
     origin: allowedOrigin,
     credentials: true,
@@ -21,7 +24,7 @@ app.use(express.json({limit:"16kb"}))
 app.use(express.urlencoded({limit:"16kb",extended:true}))
 app.use(express.static("public"))
 
-
+console.log("Allowed Origin:", allowedOrigin);
 
 //cors configuration 
 app.use(cors(corsOptions));
@@ -38,6 +41,7 @@ import reviewRoute from './modules/review/review.routes.js';
 import notificationRoute from './modules/notification/notification.routes.js';
 import adminRoute from './modules/admin/admin.routes.js';
 import paymentRoute from './modules/payment/payment.routes.js';
+import adminAuthRoute from './modules/user/admin.auth.routes.js';
 
 app.use("/api/v1/healthCheck", healthCheckRoute)
 app.use("/api/v1/auth", userRoute)
@@ -47,6 +51,7 @@ app.use("/api/v1/review", reviewRoute)
 app.use("/api/v1/notification", notificationRoute)
 app.use("/api/v1/admin", adminRoute)
 app.use("/api/v1/payment", paymentRoute)
+app.use("/api/v1/auth2/admin", adminAuthRoute)
 app.use(errorHandler)
 
 

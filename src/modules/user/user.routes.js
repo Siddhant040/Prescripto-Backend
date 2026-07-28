@@ -4,6 +4,7 @@ import {
   registerUser as register,
   loginUser as login,
   logoutUser as logout,
+  
   verifyEmail,
   resendEmailVerification,
   forgotPassword,
@@ -15,7 +16,7 @@ import {
   updateUserprofile,
   userActiveRole
 } from "./user.auth.controller.js";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
+import {  authMiddleware,  } from "../../middleware/auth.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import {
   registerSchema,
@@ -31,6 +32,9 @@ const router = Router();
 
 router.post("/register", validate(registerSchema), register);
 router.post("/login", validate(loginSchema), login);
+
+
+
 
 router.post("/upload-avatar", authMiddleware, upload.single("avatar"), uploadUserAvatar);
 

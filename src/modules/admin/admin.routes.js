@@ -7,13 +7,13 @@ import {
   getAllReviewsForAdmin,
   deleteReviewByAdmin
 } from "./admin.controller.js";
-import { authMiddleware } from "../../middleware/auth.middleware.js";
+import {  authMiddlewareAdmin } from "../../middleware/auth.middleware.js";
 import { authorizeRoles } from "../../middleware/role.middleware.js";
 import { UserRoleEnum } from "../../utils/constants.js";
 
 const router = Router();
 
-router.use(authMiddleware, authorizeRoles(UserRoleEnum.ADMIN));
+router.use(authMiddlewareAdmin, authorizeRoles(UserRoleEnum.ADMIN));
 
 router.get("/dashboard", getAdminDashboard);
 router.get("/doctors", getAllDoctorsForAdmin);

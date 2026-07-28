@@ -11,7 +11,7 @@ import {
   getLoginDoctor
 } from "./doctor.controller.js";
 
-import { authMiddleware } from "../../middleware/auth.middleware.js";
+import { authMiddleware, authMiddlewareAdmin } from "../../middleware/auth.middleware.js";
 import { authorizeRoles } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import { createDoctorSchema } from "./doctor.validation.js";
@@ -65,13 +65,13 @@ router.patch(
 );
 
 
-// Admin-only routes
-router.patch(
-  "/verify/:id",
-  authMiddleware,
-  authorizeRoles(UserRoleEnum.ADMIN),
-  verifyDoctorProfile
-);
+// // Admin-only routes
+// router.patch(
+//   "/verify/:id",
+//   authMiddlewareAdmin,
+//   authorizeRoles(UserRoleEnum.ADMIN),
+//   verifyDoctorProfile
+// );
 
 
 export default router;
