@@ -103,7 +103,8 @@ if (!allowedRoles.includes(user.activeRole)) {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-  const refreshToken = req.cookies?.refreshToken;
+  console.log("user logged out controller");
+  const refreshToken = req.cookies?.userRefreshToken;
 
   if (!refreshToken) {
     throw new ApiError(400, "Refresh token not found");
@@ -117,15 +118,15 @@ const logoutUser = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .clearCookie("accessToken", getCookieOptions())
-    .clearCookie("refreshToken", getCookieOptions())
+    .clearCookie("userAccessToken", getCookieOptions())
+    .clearCookie("userRefreshToken", getCookieOptions())
     .json(
       new ApiResponse(200, null, "User logged out successfully")
     );
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-  const incomingRefreshToken = req.cookies?.refreshToken;
+  const incomingRefreshToken = req.cookies?.userRefreshToken;
 
   if (!incomingRefreshToken) {
     throw new ApiError(400, "Refresh token not found");
@@ -152,8 +153,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
   return res
     .status(200)
-    .cookie("accessToken", accessToken, getCookieOptions())
-    .cookie("refreshToken", newRefreshToken, getCookieOptions())
+    .cookie("userAccessToken", accessToken, getCookieOptions())
+    .cookie("userRefreshToken", newRefreshToken, getCookieOptions())
     .json(new ApiResponse(200, null, "Access token refreshed successfully"));
 
 
@@ -404,7 +405,7 @@ const userActiveRole = asyncHandler(async (req, res) => {
 
   return res
     .status(200)
-    .cookie("accessToken", accessToken, getCookieOptions())
+    .cookie("userAccessToken", accessToken, getCookieOptions())
     .json(
       new ApiResponse(
         200,

@@ -37,7 +37,10 @@ router.get(
   getReviewsByPatient
 );
 
-router.get("/:id", getReviewsByid);
+router.get("/:id", (req, res, next) => {
+  console.log("Review route hit:", req.params.id);
+  next();
+}, getReviewsByid);
 
 router.patch(
   "/:id",

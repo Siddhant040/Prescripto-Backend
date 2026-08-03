@@ -81,6 +81,8 @@ const logoutAdmin = asyncHandler(async (req, res) => {
     );
 });
 const adminRefreshAccessToken = asyncHandler(async (req, res) => {
+
+  console.log("ADMIN REFRESH TOKEN CONTROLLER");
   const incomingRefreshToken = req.cookies?.adminRefreshToken;
 
   if (!incomingRefreshToken) {
