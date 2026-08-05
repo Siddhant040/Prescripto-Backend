@@ -5,7 +5,8 @@ import {
   getReviewsByPatient,
   getReviewsByid,
   updateReview,
-  deleteReview
+  deleteReview,
+  getReviewsByDoctorId
 } from "./review.controller.js";
 
 import {createReviewSchema, updateReviewSchema} from "./review.validation.js";
@@ -36,6 +37,7 @@ router.get(
   authorizeRoles("patient"),
   getReviewsByPatient
 );
+router.get("/doctor/:id", getReviewsByDoctorId);
 
 router.get("/:id", (req, res, next) => {
   console.log("Review route hit:", req.params.id);

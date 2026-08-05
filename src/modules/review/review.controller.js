@@ -389,6 +389,25 @@ const deleteReview = asyncHandler(async (req, res) => {
     new ApiResponse(200, null, "Review deleted successfully")
   );
 });
+const getReviewsByDoctorId = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    throw new ApiError(400, "Invalid Doctor ID");
+
+  }
+
+  const reviews = await Review.find({
+    doctor: id,
+    isDeleted: false
+  }).populate(reviewPopulate)
+  .sort({ createdAt: -1 })
+    .lean();
+
+  return res.status(200).json(
+    new ApiResponse(200, mapReviewsToDTO(reviews), "Reviews fetched successfully")
+  );
+})
 
 export {
   createReview,
@@ -396,5 +415,6 @@ export {
   getReviewsByPatient,
   getReviewsByid,
   updateReview,
-  deleteReview
+  deleteReview,
+  getReviewsByDoctorId
 };
