@@ -42,6 +42,7 @@ import notificationRoute from './modules/notification/notification.routes.js';
 import adminRoute from './modules/admin/admin.routes.js';
 import paymentRoute from './modules/payment/payment.routes.js';
 import adminAuthRoute from './modules/user/admin.auth.routes.js';
+import statsRoute from './modules/stats/stats.routes.js';
 
 app.use("/api/v1/healthCheck", healthCheckRoute)
 app.use("/api/v1/auth", userRoute)
@@ -52,6 +53,7 @@ app.use("/api/v1/notification", notificationRoute)
 app.use("/api/v1/admin", adminRoute)
 app.use("/api/v1/payment", paymentRoute)
 app.use("/api/v1/auth2/admin", adminAuthRoute)
+app.use("/api/v1/stats", statsRoute)
 app.use(errorHandler)
 
 

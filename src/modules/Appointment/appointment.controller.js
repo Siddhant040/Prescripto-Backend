@@ -28,7 +28,7 @@ const appointmentPopulate = [
   },
   {
     path: "patient",
-    select: "name email phone address dateOfBirth gender "
+    select: "name email phone address dateOfBirth gender avatar" 
   }
 ];
 
@@ -301,10 +301,30 @@ const getAppointmentsForDoctor = asyncHandler(async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .lean(),
-    Appointment.countDocuments(query)
+
+    Appointment.countDocuments(query),
   ]);
 
-  const dtoList = appointments.map(mapAppointmentToDTO);
+  // Get payment status
+  const appointmentIds = appointments.map((appointment) => appointment._id);
+
+  const payments = await Payment.find({
+    appointment: { $in: appointmentIds },
+  }).select("appointment status");
+
+  const paymentMap = new Map(
+    payments.map((payment) => [
+      payment.appointment.toString(),
+      payment.status,
+    ])
+  );
+
+  const dtoList = appointments.map((appointment) => {
+    appointment.paymentStatus =
+      paymentMap.get(appointment._id.toString()) ?? null;
+
+    return mapAppointmentToDTO(appointment);
+  });
 
   return res.status(200).json(
     new ApiResponse(
@@ -313,7 +333,7 @@ const getAppointmentsForDoctor = asyncHandler(async (req, res) => {
         appointments: dtoList,
         total,
         page,
-        limit
+        limit,
       },
       "Appointments fetched successfully"
     )

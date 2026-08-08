@@ -5,6 +5,7 @@ import { ApiResponse } from "../../errors/apiResponse.js";
 import { UserRoleEnum } from "../../utils/constants.js";
 import { User } from "../user/user.model.js";
 import mongoose from "mongoose";
+import {Review} from "../review/review.model.js";
 
 const updateAvailability = asyncHandler(async (req, res) => {
   const { availability } = req.body;
@@ -82,48 +83,84 @@ const createDoctorProfile = asyncHandler(async (req, res) => {
 })
 
 const getAllDoctors = asyncHandler(async (req, res) => {
-
   let { page = 1, limit = 10, specialization } = req.query;
 
-  // sanitize inputs
+  // Sanitize inputs
   page = Number(page) > 0 ? Number(page) : 1;
   limit = Number(limit) > 0 ? Number(limit) : 10;
   limit = Math.min(limit, 50);
 
-  // base filter
+  // Base filter
   const filter = {
     isVerified: true,
-    isAvailable: true
+    isAvailable: true,
   };
 
-  // specialization filter
+  // Specialization filter
   if (specialization) {
     filter.specialization = {
       $regex: specialization,
-      $options: "i"
+      $options: "i",
     };
   }
 
-  // fetch doctors
+  // Fetch doctors
   const doctors = await Doctor.find(filter)
     .populate("user", "name avatar")
     .skip((page - 1) * limit)
     .limit(limit)
     .sort({ createdAt: -1 });
 
-  // total count
+  // Fetch reviews for all doctors in one query
+  const doctorIds = doctors.map((doctor) => doctor._id);
+
+  const reviews = await Review.find({
+    doctor: { $in: doctorIds },
+    isDeleted: false,
+  })
+    .populate("patient", "name avatar")
+    .select("doctor patient rating review createdAt");
+
+  // Create doctorId -> reviews[] map
+  const reviewMap = new Map();
+
+  for (const review of reviews) {
+    const doctorId = review.doctor.toString();
+
+    if (!reviewMap.has(doctorId)) {
+      reviewMap.set(doctorId, []);
+    }
+
+    reviewMap.get(doctorId).push(review);
+  }
+
+  // Attach reviews to each doctor
+  const doctorList = doctors.map((doctor) => {
+    const doctorObject = doctor.toObject();
+
+    doctorObject.reviews =
+      reviewMap.get(doctor._id.toString()) ?? [];
+
+    return doctorObject;
+  });
+
+  // Total count
   const totalDoctors = await Doctor.countDocuments(filter);
 
   const totalPages = Math.ceil(totalDoctors / limit);
 
   return res.status(200).json(
-    new ApiResponse(200, {
-      total: totalDoctors,
-      page,
-      totalPages,
-      limit,
-      doctors
-    }, "Doctors fetched successfully")
+    new ApiResponse(
+      200,
+      {
+        total: totalDoctors,
+        page,
+        totalPages,
+        limit,
+        doctors: doctorList,
+      },
+      "Doctors fetched successfully"
+    )
   );
 });
 const getDoctorById = asyncHandler(async (req, res) => {
