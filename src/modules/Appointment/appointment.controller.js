@@ -276,9 +276,7 @@ const getAppointmentsForDoctor = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Doctor profile not found");
   }
 
-  if (!doctor.isVerified) {
-    throw new ApiError(403, "Doctor is not verified");
-  }
+  
 
   let { page = 1, limit = 10 } = req.query;
   page = Number(page);

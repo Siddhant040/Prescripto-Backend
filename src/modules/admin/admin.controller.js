@@ -11,6 +11,7 @@ import { ApiError } from "../../errors/apiError.js";
 import { ApiResponse } from "../../errors/apiResponse.js";
 import { mapAdminDashboardDTO } from "./admin.dto.js";
 import { APPOINTMENT_STATUS } from "../../utils/constants.js";
+import {UserRoleEnum} from "../../utils/constants.js";
 
 const appointmentPopulate = [
   {
@@ -84,7 +85,9 @@ const getAdminDashboard = asyncHandler(async (req, res) => {
     activeReviews,
     notifications
   ] = await Promise.all([
-    User.countDocuments(),
+    User.countDocuments({
+      roles: { $ne: UserRoleEnum.ADMIN },
+    }),
     Doctor.countDocuments(),
     Doctor.countDocuments({ isVerified: true }),
     Appointment.countDocuments(),
