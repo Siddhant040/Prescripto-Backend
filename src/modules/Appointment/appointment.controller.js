@@ -141,8 +141,21 @@ const createAppointment = asyncHandler(async (req, res) => {
   const { doctorId, appointmentDateTime } = req.body;
   const patientId = req.user._id;
 
+  // Must be a patient role
   if (req.user.activeRole !== UserRoleEnum.PATIENT) {
     throw new ApiError(403, "Only patients can book appointments");
+  }
+
+  // Prevent doctors from booking appointments
+  const doctorProfile = await Doctor.findOne({
+    user: patientId,
+  });
+
+  if (doctorProfile) {
+    throw new ApiError(
+      403,
+      "Doctors cannot book appointments as patients"
+    );
   }
 
   if (!doctorId || !appointmentDateTime) {
@@ -177,14 +190,14 @@ const createAppointment = asyncHandler(async (req, res) => {
     throw new ApiError(403, "Doctor is not available");
   }
 
-  await ensureSlotAvailable(doctor, appointmentDate);
-
   try {
+    await ensureSlotAvailable(doctor, appointmentDate);
+
     let appointment = await Appointment.create({
       doctor: doctor._id,
       patient: patientId,
       appointmentDateTime: appointmentDate,
-      status: APPOINTMENT_STATUS.PENDING
+      status: APPOINTMENT_STATUS.PENDING,
     });
 
     appointment = await populateAppointment(appointment);
