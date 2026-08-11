@@ -94,8 +94,6 @@ const seedDoctorCandidates = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
 
-    console.log("MongoDB connected");
-
     const existingEmails = await User.find({
       email: {
         $in: doctorCandidates.map((user) => user.email),
@@ -103,49 +101,21 @@ const seedDoctorCandidates = async () => {
     }).select("email");
 
     if (existingEmails.length > 0) {
-      console.log("Some users already exist:");
-
-      existingEmails.forEach((user) => {
-        console.log(`- ${user.email}`);
-      });
-
-      console.log("Aborting seed to avoid duplicate users.");
       process.exit(1);
     }
 
     const users = doctorCandidates.map((user) => ({
       ...user,
-
-      // User pre-save hook hashes this automatically
       password: "Test@12345",
-
-      // IMPORTANT:
-      // They start as normal patients.
       roles: [UserRoleEnum.PATIENT],
       activeRole: UserRoleEnum.PATIENT,
-
-      // Skip email verification because registration flow
-      // has already been tested with your manually registered users.
       isEmailVerified: true,
-
       isActive: true,
     }));
 
-    const createdUsers = await User.create(users);
-
-    console.log(
-      `Successfully seeded ${createdUsers.length} patient accounts.`
-    );
-
-    createdUsers.forEach((user) => {
-      console.log(
-        `${user.name} → ${user.email} → ${user.roles.join(", ")}`
-      );
-    });
+    await User.create(users);
 
     await mongoose.disconnect();
-
-    console.log("MongoDB disconnected");
   } catch (error) {
     console.error("Doctor candidate seed failed:", error);
 

@@ -40,7 +40,6 @@ router.get(
 router.get("/doctor/:id", getReviewsByDoctorId);
 
 router.get("/:id", (req, res, next) => {
-  console.log("Review route hit:", req.params.id);
   next();
 }, getReviewsByid);
 

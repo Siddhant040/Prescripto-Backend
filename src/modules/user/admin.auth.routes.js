@@ -24,7 +24,6 @@ import {
 } from "./user.auth.validation.js";
 
 const router = Router();
-console.log("Admin auth routes loaded");
 
 
 

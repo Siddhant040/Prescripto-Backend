@@ -5,7 +5,7 @@ import { UserRoleEnum } from "../../utils/constants.js";
 
 dotenv.config({
   path: "./src/.env",
-})
+});
 
 const patients = [
   {
@@ -134,8 +134,6 @@ const seedPatients = async () => {
   try {
     await mongoose.connect(process.env.MONGO_URI);
 
-    console.log("MongoDB connected");
-
     const existingEmails = await User.find({
       email: {
         $in: patients.map((patient) => patient.email),
@@ -143,46 +141,21 @@ const seedPatients = async () => {
     }).select("email");
 
     if (existingEmails.length > 0) {
-      console.log("Some patients already exist:");
-
-      existingEmails.forEach((user) => {
-        console.log(`- ${user.email}`);
-      });
-
-      console.log("Aborting seed to avoid duplicate users.");
       process.exit(1);
     }
 
     const users = patients.map((patient) => ({
       ...patient,
-
-      // This is the plain password.
-      // Your User pre-save hook will hash it automatically.
       password: "Test@12345",
-
       roles: [UserRoleEnum.PATIENT],
       activeRole: UserRoleEnum.PATIENT,
-
-      // Seeded users don't need email verification testing.
-      // That was already tested with your manually registered patients.
       isEmailVerified: true,
-
       isActive: true,
     }));
 
-    const createdPatients = await User.create(users);
-
-    console.log(
-      `Successfully seeded ${createdPatients.length} patients.`
-    );
-
-    createdPatients.forEach((patient) => {
-      console.log(`${patient.name} → ${patient.email}`);
-    });
+    await User.create(users);
 
     await mongoose.disconnect();
-
-    console.log("MongoDB disconnected");
   } catch (error) {
     console.error("Patient seed failed:", error);
 

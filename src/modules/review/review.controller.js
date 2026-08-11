@@ -270,7 +270,6 @@ const getReviewsByPatient = asyncHandler(async (req, res) => {
       .lean(),
     Review.countDocuments(query)
   ]);
-  console.log(reviews);
   
 
   return res.status(200).json(

@@ -222,9 +222,6 @@ const verifyPayment = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Pending payment order not found");
     
   }
-  console.log("Logged-in user:", req.user._id);
-    console.log("Payment appointment:", payment.appointment);
-    console.log("Appointment patient:", payment.appointment?.patient);
 
  if (!payment.appointment.patient.equals(req.user._id)) {
   throw new ApiError(
@@ -266,7 +263,6 @@ const verifyPayment = asyncHandler(async (req, res) => {
       entityType: "payment"
     });
   } catch (error) {
-    console.log("unable to create notifiction")
   }
   await createNotification({
     recipient: payment.appointment.doctor.user,

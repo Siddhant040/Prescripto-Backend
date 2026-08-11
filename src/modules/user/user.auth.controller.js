@@ -103,7 +103,6 @@ if (!allowedRoles.includes(user.activeRole)) {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-  console.log("user logged out controller");
   const refreshToken = req.cookies?.userRefreshToken;
 
   if (!refreshToken) {

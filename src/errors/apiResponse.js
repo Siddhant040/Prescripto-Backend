@@ -4,8 +4,8 @@ class ApiResponse {
     this.statusCode = statusCode
     this.message = message
     this.data = data
-    this.meta = meta// pagination or other metadata
-    this.timestamp = new Date().toISOString()// for logging and debugging purposes
+    this.meta = meta
+    this.timestamp = new Date().toISOString()
   }
 }
 

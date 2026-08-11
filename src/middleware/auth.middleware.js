@@ -4,7 +4,6 @@ import jwt from "jsonwebtoken";
 import { User } from "../modules/user/user.model.js";
 
 export const authMiddleware = asyncHandler(async (req, res, next) => {
-  console.log("USER middleware ->", req.method, req.originalUrl);
   const accessToken = req.cookies?.userAccessToken;
 
   if (!accessToken) {
@@ -37,7 +36,6 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
 });
 
 export const authMiddlewareAdmin = asyncHandler(async (req, res, next) => {
-    console.log("ADMIN middleware ->", req.method, req.originalUrl);
   const accessToken = req.cookies?.adminAccessToken;
 
   if (!accessToken) {

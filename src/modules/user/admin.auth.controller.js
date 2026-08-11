@@ -30,7 +30,6 @@ const generateAccessAndRefreshTokens = async (userId) => {
 
 
 const adminLogin = asyncHandler(async (req, res) => {
-  console.log("ADMIN LOGIN CONTROLLER");
   const { email, password } = req.body;
   const user = await User.findOne({ email });
   if (!user) {
@@ -82,7 +81,6 @@ const logoutAdmin = asyncHandler(async (req, res) => {
 });
 const adminRefreshAccessToken = asyncHandler(async (req, res) => {
 
-  console.log("ADMIN REFRESH TOKEN CONTROLLER");
   const incomingRefreshToken = req.cookies?.adminRefreshToken;
 
   if (!incomingRefreshToken) {

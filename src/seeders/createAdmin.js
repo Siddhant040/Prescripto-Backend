@@ -29,7 +29,6 @@ const createOrPromoteAdmin = async () => {
       existingUser.isEmailVerified = true;
       await existingUser.save({ validateBeforeSave: false });
 
-      console.log(`Promoted existing user ${email} to admin.`);
       process.exit(0);
     }
 
@@ -45,10 +44,10 @@ const createOrPromoteAdmin = async () => {
       email,
       password,
       role: UserRoleEnum.ADMIN,
-      isEmailVerified: true
+      isEmailVerified: true,
     });
 
-    console.log(`Created admin user ${adminUser.email}.`);
+    void adminUser;
     process.exit(0);
   } catch (error) {
     console.error("Failed to create or promote admin:", error.message);

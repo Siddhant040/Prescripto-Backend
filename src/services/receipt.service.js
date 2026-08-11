@@ -8,11 +8,6 @@ export const generateReceiptPDF = async (payment) => {
 
   try {
     const page = await browser.newPage();
-   console.log("Doctor =", payment.doctor);
-console.log("Doctor name =", payment.doctor?.name);
-console.log("Doctor user =", payment.doctor?.user);
-console.log("Patient =", payment.patient);
-console.log("Patient name =", payment.patient?.name);
 
     await page.setContent(receiptTemplate(payment), {
       waitUntil: "networkidle0",

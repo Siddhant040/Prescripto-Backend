@@ -13,9 +13,9 @@ class ApiError extends Error {
     this.data = null
 
     if (stack) {
-      this.stack = stack // Use provided stack trace if available (e.g., from another error)
+      this.stack = stack
     } else {
-      Error.captureStackTrace(this, this.constructor) // Capture stack trace for debugging (excluding constructor)
+      Error.captureStackTrace(this, this.constructor)
     }
   }
 }

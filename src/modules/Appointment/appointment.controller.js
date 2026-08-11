@@ -380,9 +380,6 @@ const getAppointmentsById = asyncHandler(async (req, res) => {
 
   const appointment = appointmentDoc.toObject();
   ;
-  console.log("Payment:", payment);
-  console.log("Payment Status:", payment?.status);
-  console.log("Review from DB:", review);
   appointment.paymentStatus = payment?.status ?? null;
 
   appointment.review = review ?? null;
@@ -557,8 +554,6 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
   ]);
 
   const appointment = populatedAppointment.toObject();
-  console.log("Payment:", payment);
-  console.log("Payment Status:", payment?.status);
 
   appointment.paymentStatus = payment?.status ?? null;
   appointment.review = review
@@ -706,7 +701,6 @@ const createPrescription = asyncHandler(async (req, res) => {
 
   }
 
-  console.log("Request Body:", req.body);
 
   const { diagnosis, medicine, instructions } = req.body;
 
