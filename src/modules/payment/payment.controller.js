@@ -7,13 +7,15 @@ import { asyncHandler } from "../../utils/asyncHandler.js";
 import {
   PAYMENT_PROVIDER,
   PAYMENT_STATUS,
-  UserRoleEnum
+  UserRoleEnum,
+  NOTIFICATION_TYPES
 } from "../../utils/constants.js";
 import { Appointment } from "../Appointment/appointment.model.js";
 import { Doctor } from "../doctor/doctor.model.js";
 import { mapPaymentToDTO, mapPaymentsToDTO } from "./payment.dto.js";
 import { Payment } from "./payment.model.js";
-import {generateReceiptPDF} from "../../services/receipt.service.js"
+import { generateReceiptPDF } from "../../services/receipt.service.js"
+import { createNotification } from "../notification/notification.controller.js";
 
 const paymentPopulate = [
   {
@@ -204,25 +206,32 @@ const verifyPayment = asyncHandler(async (req, res) => {
   const { providerOrderId, providerPaymentId, providerSignature } = req.body;
 
   const payment = await Payment.findOne({
-  providerOrderId,
-  status: PAYMENT_STATUS.PENDING
-})
-.populate("patient", "name")
-.populate({
-  path: "appointment",
-  populate: {
-    path: "doctor",
-    select: "user"
-  }
-});
+    providerOrderId,
+    status: PAYMENT_STATUS.PENDING
+  })
+    .populate("patient", "name")
+    .populate({
+      path: "appointment",
+      populate: {
+        path: "doctor",
+        select: "user"
+      }
+    });
 
   if (!payment) {
     throw new ApiError(404, "Pending payment order not found");
+    
   }
+  console.log("Logged-in user:", req.user._id);
+    console.log("Payment appointment:", payment.appointment);
+    console.log("Appointment patient:", payment.appointment?.patient);
 
-  if (payment.patient.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "You can only verify your own payment");
-  }
+ if (!payment.appointment.patient.equals(req.user._id)) {
+  throw new ApiError(
+    403,
+    "You can only verify your own payment"
+  );
+}
 
   if (payment.provider === PAYMENT_PROVIDER.RAZORPAY) {
     const isSignatureValid = verifyRazorpaySignature({
@@ -244,19 +253,19 @@ const verifyPayment = asyncHandler(async (req, res) => {
   payment.failureReason = undefined;
 
   await payment.save();
-  
-  
-  try{
+
+
+  try {
     await createNotification({
-    recipient: payment.patient,
-    sender: null,
-    type: NOTIFICATION_TYPES.PAYMENT_SUCCESS,
-    title: "Payment Successful",
-    message: `Your payment of ₹${payment.amount} has been received successfully.`,
-    entityId: payment._id,
-    entityType: "payment"
-});
-  }catch(error){
+      recipient: payment.patient,
+      sender: null,
+      type: NOTIFICATION_TYPES.PAYMENT_SUCCESS,
+      title: "Payment Successful",
+      message: `Your payment of ₹${payment.amount} has been received successfully.`,
+      entityId: payment._id,
+      entityType: "payment"
+    });
+  } catch (error) {
     console.log("unable to create notifiction")
   }
   await createNotification({
@@ -267,7 +276,7 @@ const verifyPayment = asyncHandler(async (req, res) => {
     message: `${payment.patient.name} has successfully paid the consultation fee.`,
     entityId: payment._id,
     entityType: "payment",
-});
+  });
 
   const populatedPayment = await payment.populate(paymentPopulate);
 
@@ -431,19 +440,19 @@ const getPaymentReceipt = asyncHandler(async (req, res) => {
   if (payment.status !== PAYMENT_STATUS.PAID) {
     throw new ApiError(400, "Receipt is available only for paid payments.");
   }
-const pdf = await generateReceiptPDF(payment);
+  const pdf = await generateReceiptPDF(payment);
 
-res.setHeader("Content-Type", "application/pdf");
-res.setHeader(
-  "Content-Disposition",
-  `attachment; filename=receipt-${payment._id}.pdf`
-);
-res.setHeader("Content-Length", pdf.length);
+  res.setHeader("Content-Type", "application/pdf");
+  res.setHeader(
+    "Content-Disposition",
+    `attachment; filename=receipt-${payment._id}.pdf`
+  );
+  res.setHeader("Content-Length", pdf.length);
 
-return res.end(pdf);
-  
+  return res.end(pdf);
 
- 
+
+
 });
 
 export {
