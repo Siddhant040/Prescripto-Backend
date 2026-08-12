@@ -1,26 +1,14 @@
 import { Router } from "express";
-import { upload } from "../../middleware/multer.middleware.js";
-import {
-  
-  logoutAdmin as logout,
-  adminLogin,
-
-  
-  adminRefreshAccessToken as refreshAccessToken,
-  getCurrentAdmin as getCurrentUser,
- 
-  
-  
-} from "./admin.auth.controller.js";
-import {  authMiddlewareAdmin } from "../../middleware/auth.middleware.js";
+import { authMiddlewareAdmin } from "../../middleware/auth.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
 import {
-  
-  loginSchema,
-  
-  changePasswordSchema,
-  updateProfileSchema,
-   
+  adminLogin,
+  getCurrentAdmin as getCurrentUser,
+  logoutAdmin as logout,
+  adminRefreshAccessToken as refreshAccessToken,
+} from "./admin.auth.controller.js";
+import {
+  loginSchema
 } from "./user.auth.validation.js";
 
 const router = Router();
@@ -28,7 +16,7 @@ const router = Router();
 
 
 router.post("/admin-login",
-   
+
   validate(loginSchema), adminLogin);
 
 

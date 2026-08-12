@@ -35,7 +35,7 @@ const createDoctorProfile = asyncHandler(async (req, res) => {
   // get input from request body
   const { specialization, experience, consultationFee, bio, clinicAddress, qualifications } = req.body
   //basic validation
-  if (!specialization || experience == null || consultationFee == null || !qualifications || !clinicAddress) {
+  if (!specialization || experience === null || consultationFee === null || !qualifications || !clinicAddress) {
     throw new ApiError(400, "Required fields missing");
   }
   //normalize number fields
@@ -83,7 +83,8 @@ const createDoctorProfile = asyncHandler(async (req, res) => {
 })
 
 const getAllDoctors = asyncHandler(async (req, res) => {
-  let { page = 1, limit = 10, specialization } = req.query;
+  let { page = 1, limit = 10 } = req.query;
+  const { specialization } = req.query;
 
   // Sanitize inputs
   page = Number(page) > 0 ? Number(page) : 1;

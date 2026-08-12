@@ -195,7 +195,9 @@ doctorSchema.pre(["findOneAndUpdate", "updateOne"], function (next) {
     const availability =
       update?.availability || update?.$set?.availability;
 
-    if (!availability) return next();
+    if (!availability){ 
+      return next()
+    } ;
 
     runAvailabilityValidation.call(
       { slotDuration: update.slotDuration || 30 },

@@ -30,7 +30,7 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
     req.user = user;
 
     next();
-  } catch (error) {
+  } catch  {
     throw new ApiError(401, "Invalid or expired token");
   }
 });
@@ -62,7 +62,7 @@ export const authMiddlewareAdmin = asyncHandler(async (req, res, next) => {
     req.user = user;
 
     next();
-  } catch (error) {
+  } catch  {
     throw new ApiError(401, "Invalid or expired token");
   }
 });

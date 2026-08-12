@@ -8,7 +8,9 @@ export const uploadToCloudinary = (fileBuffer) => {
         folder: "prescripto",
       },
       (error, result) => {
-        if (error) reject(error);
+        if (error){
+          reject(error)
+        };
         resolve(result);
       }
     );

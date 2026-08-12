@@ -24,7 +24,7 @@ const generateAccessAndRefreshTokens = async (userId) => {
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
 
-  } catch (error) {
+  } catch  {
     throw new ApiError(500, "Error generating tokens");
   }
 }
@@ -135,7 +135,7 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
   try {
     decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
-  } catch (error) {
+  } catch  {
     throw new ApiError(401, "Invalid refresh token");
   }
 
@@ -196,7 +196,7 @@ const verifyEmail = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Verification token is required");
   }
   // Generate a random token (unhashed)
-  let hashedToken = crypto
+  const hashedToken = crypto
     .createHash("sha256")
     .update(token) // Use the unhashed token as input
     .digest("hex") // Convert to a hex string
@@ -310,7 +310,7 @@ const resetPassword = asyncHandler(async (req, res) => {
   if (!newPassword) {
     throw new ApiError(400, "New password is required");
   }
-  let hashedToken = crypto
+  const hashedToken = crypto
     .createHash("sha256")
     .update(token) // Use the unhashed token as input
     .digest("hex") // Convert to a hex string
@@ -367,12 +367,25 @@ const updateUserprofile = asyncHandler(async (req, res) => {
   if (!user) {
     throw new ApiError(404, "User not found");
   } 
+if (name !== undefined) {
+  user.name = name;
+}
 
- if (name !== undefined) user.name = name;
-if (phone !== undefined) user.phone = phone;
-if (address !== undefined) user.address = address;
-if (gender !== undefined) user.gender = gender;
-if (dateOfBirth !== undefined) user.dateOfBirth = dateOfBirth;
+if (phone !== undefined) {
+  user.phone = phone;
+}
+
+if (address !== undefined) {
+  user.address = address;
+}
+
+if (gender !== undefined) {
+  user.gender = gender;
+}
+
+if (dateOfBirth !== undefined) {
+  user.dateOfBirth = dateOfBirth;
+}
 
   await user.save({ validateBeforeSave: false });
 

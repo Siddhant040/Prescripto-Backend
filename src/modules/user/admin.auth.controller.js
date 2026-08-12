@@ -1,12 +1,9 @@
-import { User } from "./user.model.js";
-import { asyncHandler } from "../../utils/asyncHandler.js";
-import { ApiResponse } from "../../errors/apiResponse.js";
-import { ApiError } from "../../errors/apiError.js";   // Import the ApiResponse class from your errors api
-import { passwordResetTemplate, emailVerificationTemplate, sendEmail } from "../../utils/email.js";
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
-import { uploadToCloudinary } from "../../utils/cloudinaryUpload.js";
+import { ApiError } from "../../errors/apiError.js"; // Import the ApiResponse class from your errors api
+import { ApiResponse } from "../../errors/apiResponse.js";
+import { asyncHandler } from "../../utils/asyncHandler.js";
 import { UserRoleEnum } from "../../utils/constants.js";
+import { User } from "./user.model.js";
 
 const getCookieOptions = () => ({
   httpOnly: true,
@@ -23,10 +20,11 @@ const generateAccessAndRefreshTokens = async (userId) => {
     await user.save({ validateBeforeSave: false });
     return { accessToken, refreshToken };
 
-  } catch (error) {
+  } catch  {
     throw new ApiError(500, "Error generating tokens");
   }
 }
+
 
 
 const adminLogin = asyncHandler(async (req, res) => {
@@ -39,7 +37,7 @@ const adminLogin = asyncHandler(async (req, res) => {
   if (!isPasswordCorrect) {
     throw new ApiError(401, "Invalid email or password");
   }
-  if(user.activeRole !== UserRoleEnum.ADMIN){ 
+  if (user.activeRole !== UserRoleEnum.ADMIN) {
     throw new ApiError(401, "You are not authorized to access the admin portal.");
 
   }
@@ -51,7 +49,7 @@ const adminLogin = asyncHandler(async (req, res) => {
     throw new ApiError(500, "Some error occurred while fetching user data");
 
   }
-  
+
   return res
     .status(200)
     .cookie("adminAccessToken", accessToken, getCookieOptions())
@@ -91,7 +89,7 @@ const adminRefreshAccessToken = asyncHandler(async (req, res) => {
   try {
     decodedToken = jwt.verify(incomingRefreshToken, process.env.REFRESH_TOKEN_SECRET)
 
-  } catch (error) {
+  } catch  {
     throw new ApiError(401, "Invalid refresh token");
   }
 
@@ -118,4 +116,5 @@ const getCurrentAdmin = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, req.user, "User fetched successfully"));
 })
 
-export { adminLogin, logoutAdmin, adminRefreshAccessToken, getCurrentAdmin }
+export { adminLogin, adminRefreshAccessToken, getCurrentAdmin, logoutAdmin };
+

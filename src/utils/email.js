@@ -3,7 +3,9 @@ import nodemailer from "nodemailer";
 let transporter;
 
 const getTransporter = () => {
-  if (transporter) return transporter;
+  if (transporter) {
+    return transporter
+  };
 
   transporter = nodemailer.createTransport({
     host: process.env.MAILTRAP_HOST,

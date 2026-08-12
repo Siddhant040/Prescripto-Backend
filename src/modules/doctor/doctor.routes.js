@@ -1,21 +1,20 @@
 import { Router } from "express";
 import {
   createDoctorProfile,
+  deleteDoctorProfile,
   getAllDoctors,
   getDoctorById,
-  updateDoctorProfile,
-  deleteDoctorProfile,
+  getLoginDoctor,
   toggleDoctorAvailability,
-  verifyDoctorProfile,
   updateAvailability,
-  getLoginDoctor
+  updateDoctorProfile
 } from "./doctor.controller.js";
 
-import { authMiddleware, authMiddlewareAdmin } from "../../middleware/auth.middleware.js";
+import { authMiddleware } from "../../middleware/auth.middleware.js";
 import { authorizeRoles } from "../../middleware/role.middleware.js";
 import { validate } from "../../middleware/validate.middleware.js";
+import { UserRoleEnum } from "../../utils/constants.js";
 import { createDoctorSchema } from "./doctor.validation.js";
-import { UserRoleEnum} from "../../utils/constants.js";
 
 const router = Router();
 

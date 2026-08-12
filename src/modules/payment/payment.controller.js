@@ -262,7 +262,8 @@ const verifyPayment = asyncHandler(async (req, res) => {
       entityId: payment._id,
       entityType: "payment"
     });
-  } catch (error) {
+  } catch {
+    throw new ApiError(500, "Failed to send notification");
   }
   await createNotification({
     recipient: payment.appointment.doctor.user,
