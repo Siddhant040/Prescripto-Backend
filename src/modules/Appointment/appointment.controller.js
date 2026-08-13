@@ -519,7 +519,10 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
 
   const doctor = await Doctor.findOne({ user: req.user._id });
 
-  if (!doctor || appointmentDoc.doctor.toString() !== doctor._id.toString()) {
+  if (
+    !doctor ||
+    appointmentDoc.doctor.toString() !== doctor._id.toString()
+  ) {
     throw new ApiError(403, "Unauthorized");
   }
 
@@ -528,8 +531,13 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
       APPOINTMENT_STATUS.CONFIRMED,
       APPOINTMENT_STATUS.CANCELLED,
     ],
-    [APPOINTMENT_STATUS.CONFIRMED]: [APPOINTMENT_STATUS.COMPLETED],
+
+    [APPOINTMENT_STATUS.CONFIRMED]: [
+      APPOINTMENT_STATUS.COMPLETED,
+    ],
+
     [APPOINTMENT_STATUS.COMPLETED]: [],
+
     [APPOINTMENT_STATUS.CANCELLED]: [],
   };
 
@@ -537,10 +545,26 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
     throw new ApiError(400, "Invalid transition");
   }
 
+  // Payment is required only to complete an appointment.
+  if (status === APPOINTMENT_STATUS.COMPLETED) {
+    const payment = await Payment.findOne({
+      appointment: appointmentDoc._id,
+    }).select("status");
+
+    if (payment?.status !== "paid") {
+      throw new ApiError(
+        403,
+        "Appointment can only be completed after payment"
+      );
+    }
+  }
+
   appointmentDoc.status = status;
+
   await appointmentDoc.save();
 
-  const populatedAppointment = await populateAppointment(appointmentDoc);
+  const populatedAppointment =
+    await populateAppointment(appointmentDoc);
 
   const [payment, review] = await Promise.all([
     Payment.findOne({
@@ -556,16 +580,16 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
   const appointment = populatedAppointment.toObject();
 
   appointment.paymentStatus = payment?.status ?? null;
+
   appointment.review = review
     ? {
-      _id: review._id,
-      rating: review.rating,
-      comment: review.comment,
-      createdAt: review.createdAt,
-      updatedAt: review.updatedAt,
-    }
+        _id: review._id,
+        rating: review.rating,
+        comment: review.comment,
+        createdAt: review.createdAt,
+        updatedAt: review.updatedAt,
+      }
     : null;
-
 
   await createNotification({
     recipient: populatedAppointment.patient._id,
@@ -574,14 +598,17 @@ const updateAppointmentStatus = asyncHandler(async (req, res) => {
       status === APPOINTMENT_STATUS.COMPLETED
         ? NOTIFICATION_TYPES.APPOINTMENT_COMPLETED
         : NOTIFICATION_TYPES.APPOINTMENT_CONFIRMED,
+
     title:
       status === APPOINTMENT_STATUS.COMPLETED
         ? "Appointment completed"
         : "Appointment confirmed",
+
     message:
       status === APPOINTMENT_STATUS.COMPLETED
         ? `${populatedAppointment.doctor.user?.name} marked your appointment as completed.`
         : `${populatedAppointment.doctor.user?.name} confirmed your appointment.`,
+
     entityId: populatedAppointment._id,
     entityType: "appointment",
   });
