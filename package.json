@@ -12,7 +12,8 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest run",
+  "test:watch": "vitest"
   },
   "keywords": [
     "doctor",
@@ -45,6 +46,8 @@
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.5.0",
     "nodemon": "^2.0.22",
-    "prettier": "^3.8.3"
+    "prettier": "^3.8.3",
+    "supertest": "^7.2.2",
+    "vitest": "^4.1.10"
   }
 }
