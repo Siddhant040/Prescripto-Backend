@@ -10,6 +10,7 @@ dotenv.config({ path: "./src/.env" });
 const allowedOrigin = [
   process.env.CLIENT_URL,
   process.env.ADMIN_URL,
+  process.env.BUILD_URL,
 ].filter(Boolean);
 const corsOptions = {
     origin: allowedOrigin,
