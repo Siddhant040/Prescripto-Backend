@@ -669,7 +669,7 @@ const cancelAppointment = asyncHandler(async (req, res) => {
   const title = "Appointment cancelled";
   let message = "An appointment was cancelled.";
 
-  if (req.user.role === UserRoleEnum.PATIENT) {
+  if (req.user.activeRole === UserRoleEnum.PATIENT) {
     recipient = populatedAppointment.doctor.user?._id;
     message = `${populatedAppointment.patient.name} cancelled the appointment.`;
   } else if (req.user.role === UserRoleEnum.DOCTOR) {
